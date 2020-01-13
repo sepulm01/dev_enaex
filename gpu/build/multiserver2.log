@@ -1,0 +1,22 @@
+INFO 2019-11-24 18:40:40,865 - Inicio logger
+DEBUG 2019-11-24 18:40:44,291 - Detector.read:self.read_lock 
+DEBUG 2019-11-24 18:45:30,834 - Detector.clear id:53976
+DEBUG 2019-11-24 18:49:33,668 - Detector.clear id:55502
+DEBUG 2019-11-24 19:00:58,865 - Detector.clear id:58244
+DEBUG 2019-11-24 19:14:02,359 - Detector.clear id:58356
+DEBUG 2019-11-24 19:28:00,110 - Detector.clear id:33444
+DEBUG 2019-11-24 19:35:11,780 - Detector.clear id:33660
+DEBUG 2019-11-24 19:56:48,788 - Detector.clear id:38976
+DEBUG 2019-11-24 19:57:35,742 - Detector.clear id:37194
+DEBUG 2019-11-24 20:18:47,057 - Detector.clear id:44342
+DEBUG 2019-11-24 20:41:32,705 - Detector.clear id:44540
+DEBUG 2019-11-24 20:42:19,048 - Detector.clear id:49824
+DEBUG 2019-11-24 20:58:28,227 - Detector.clear id:55700
+DEBUG 2019-11-24 21:13:46,374 - Detector.clear id:59688
+DEBUG 2019-11-24 21:27:38,346 - Detector.clear id:35206
+DEBUG 2019-11-24 21:41:27,803 - Detector.clear id:38596
+DEBUG 2019-11-24 21:55:37,840 - Detector.clear id:41978
+DEBUG 2019-11-24 22:06:53,912 - Detector.clear id:45448
+DEBUG 2019-11-24 22:19:31,866 - Detector.clear id:48194
+DEBUG 2019-11-24 22:22:45,776 - Detector.clear id:55498
+DEBUG 2019-11-24 22:38:21,900 - Detector.clear id:51366
