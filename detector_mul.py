@@ -28,6 +28,7 @@ from struct import *
 input_q = queue.Queue(maxsize=1500)
 drk_q = queue.LifoQueue(maxsize=1500)
 sensib_q = queue.Queue(maxsize=1500)
+isort_q  = queue.LifoQueue(maxsize=250)
 
 
 ######################### Darknet ###################################################
@@ -144,6 +145,7 @@ class App:
         self.tracks = []
         self.frame_idx = 0
         self.anchos_mx = np.zeros((4,4),dtype=int)
+        self.detect_interval = 10
 
     def run(self):
 
@@ -168,6 +170,7 @@ class App:
                 frame = drk_q.get()
                 drk_q.task_done()
                 drk_q.queue.clear()
+                print("drk_q ",drk_q.qsize())
                 data = cv.imencode('.jpg', frame)[1].tostring()
                     # if sensib_q.empty() != True:
                 sensib=sensib_q.get()
@@ -201,8 +204,8 @@ class App:
                         r = client_socket.recv(90456)
                         if len(r) == 0:
                             print("no datos desde el servidor de inferencias, bye!")
-                            logger.warning("Sokcet: comunicacion interrumpida con serv inferencias ")
-                            evento.set()
+                            #logger.warning("Sokcet: comunicacion interrumpida con serv inferencias ")
+                            #evento.set()
                             exit()
                         a = r.find(b'FIN!')
                         if a != -1:
@@ -269,10 +272,10 @@ class App:
             return matches, centroide
 
         retardo = 4 
-        fuente =  0 #'6_35.mp4'
+        fuente =  '6_35.mp4'
         cap = cv.VideoCapture(fuente)
         b_ground_sub = True
-        bgshow = True
+        bgshow = False
         bg_subtractor = cv.createBackgroundSubtractorMOG2(history=400, varThreshold = 20, detectShadows=True) #detecta mov de la camara
         winbGround = 'background subtraction'
         ct = CentroidTracker()
@@ -349,11 +352,25 @@ class App:
                     cv.circle(fg_mask, (centroid[0], centroid[1]), 4, (2, 255, 255), -1)
             else:
                 bg_detect = np.array([])
-            if len(bg_detect) > 0:
+
+            if len(bg_detect) > 0 and self.frame_idx % self.detect_interval == 0:
                 drk_q.put(frame) # alimenta la cola del detector
                 sensib_q.put(5)
                 draw_str(frame, (10, 30), str(drk_q.qsize()))
             #print("bg_detect", len(bg_detect) )
+
+            if isort_q.empty() != True:
+                i_sort =isort_q.get()
+                isort_q.task_done()
+                isort_q.queue.clear()
+                print(i_sort)
+                for e in i_sort:
+                    x,y,a,b = e[0],e[1],e[2],e[3]
+                    cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1)
+            else:
+                i_sort = np.array([])
+
+
             if bgshow and b_ground_sub:
                 cv.imshow(winbGround,fg_mask)
             ############fin background sub #######################################
@@ -399,6 +416,8 @@ class App:
                     re_entrenar = False
                 else:
                     graba_video = True
+
+            self.frame_idx += 1
 
         cv.destroyAllWindows()
 

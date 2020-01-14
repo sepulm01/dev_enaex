@@ -39,8 +39,7 @@ logger.info("Inicio logger")
 
 class Detector:
     '''
-    Clase detector. Loop infinito de recepción de imagenes, inferencia de objetos y devolución de
-    matriz con bbox de coordenadas, clase y nivel de confianza de la detección.
+
     '''
     def __init__(self, isort):
         self.isort = isort
@@ -117,7 +116,7 @@ class Conexion(object):
         self.client_socket.setblocking(1)
 
         while self.comienzo:
-
+            print("se")
             data = b''
             while 1:
                 try:
