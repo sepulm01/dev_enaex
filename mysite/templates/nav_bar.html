@@ -1,0 +1,53 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="/">
+    <img src="#" width="90" height="30" class="d-inline-block align-top" alt="" style="font-size:10vw;">
+    Seguridad
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarText">
+    <ul class="navbar-nav mr-auto">
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Configuración
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="/camara/">Cámaras</a>
+
+
+        </div>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Alarmas
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="/alarmas/">Alarmas</a>
+        </div>
+      </li>
+
+                {% else %}
+      <li class="nav-item">
+        <a class="nav-link" href="#">Información</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Contacto</a>
+      </li>
+          {% endif %}
+    </ul>
+    <span class="navbar-text" id="volumenid">
+      
+    </span>
+        <form class="form-inline my-2 my-lg-0">
+      {% if user.is_authenticated %}
+      <button class="btn btn-info" type="submit" formaction="#">Salir</button>
+      {% else %}
+      <button class="btn btn-info" type="submit" formaction="#">Entrar</button>
+      {% endif %}
+    </form>
+  </div>
+</nav>

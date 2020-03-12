@@ -26,6 +26,7 @@ import random
 from struct import *
 import imagezmq
 from sql.bd_django import basedatos
+import json
 
 
 #q = queue.LifoQueue(maxsize=1000)
@@ -329,6 +330,7 @@ class App:
             matches=np.int32(matches)
             return matches, centroide
         #################### settings #######################
+        actualizar = datetime.now()
         alarma = False
         fecha = datetime.today().strftime('%Y-%m-%d')
         hora = datetime.now().strftime("%H:%M:%S")
@@ -341,6 +343,20 @@ class App:
         basedatos.cam_ocupada(conn, 1,disp[0][0])
         nombre_cam = disp[0][1]
         cam_id = disp[0][0]
+        jareas=json.loads(disp[0][3])
+        areas = []
+        for i in jareas:
+            area = []
+            for ii in i:
+                area.append(list(ii.values()))
+            areas.append(area)
+        mapas = []
+        dibujo = []
+        for a in areas:
+            mapas.append(mpltPath.Path(a))
+            dibujo.append(a)
+
+
         cap = cv.VideoCapture(fuente)
         _ret, frame = cap.read()
         dim_y, dim_x, _ = frame.shape
@@ -386,7 +402,7 @@ class App:
             _ret, frame = cap.read()
 
             if _ret == False:
-                print("termino flujo de video (ret==0).")
+                print("termino flujo de video (ret==0).", nombre_cam )
                 basedatos.cam_ocupada(conn, 0,disp[0][0])
                 break #TODO sacar en produccion
                 while _ret == False:
@@ -443,7 +459,7 @@ class App:
                 i_sort =isort_q.get()
                 isort_q.task_done()
                 isort_q.queue.clear()
-                print(i_sort, type(i_sort))
+                print(i_sort)
                 record=datetime.now()+timedelta(seconds=2)
                 
                 if record > datetime.now() and alarma == False:
@@ -480,10 +496,32 @@ class App:
                 alarma = False
             cv.imshow("Frame", frame)
 
-            if self.frame_idx % 1200 == 0:
+            if actualizar < datetime.now():
                 # cada 1200 frames actualiza estado y envia una foto a base de datos
+                #, est, pk, img, actualizado):
                 data = cv.imencode('.jpg', frame)[1].tostring()
-                basedatos.cam_viva(conn, 1, 1, data, datetime.now())
+                basedatos.cam_viva(conn, 1, cam_id, data, datetime.now())
+                print("Actualizado estado en ",self.frame_idx) 
+                actualizar = datetime.now() + timedelta(seconds=60)
+
+            for i in range(0,len(dibujo)):
+                color = (0,255,0)
+                zona = con[:,i+1].tolist()
+                for zi in zona:
+                    #if zi > 125 and i>1: color = (0,0,255) discriminador de áreas i > X
+                    if zi > 10 : #150
+                        color = (0,255,255)
+                    if zi > 30: #200
+                        color = (0,0,255)
+                        #intermitente = True
+                if intermitente:
+                    color = (0,0,255)
+                    if self.frame_idx % 10 == 0:
+                        color = (0,255,255)
+                cv.polylines(vis,[dibujo[i]],True, color,2)
+                cv.fillPoly(mask_fg, [dibujo[i]], (1, 1, 1))
+                #cv.polylines(mask_fg,[dibujo[i]],True,(255, 255, 255), 1) # background sub
+                cv.putText(vis, str(i), totuple((dibujo[i])[0:1][0]), cv.FONT_HERSHEY_SIMPLEX, .7, (0, 255, 0),2)
 
 
             #sender.send_image(nombre_cam, frame)

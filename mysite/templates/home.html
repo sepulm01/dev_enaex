@@ -1,0 +1,78 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+
+
+
+<div class="container">
+ <h2> Bienvenido {{ user.first_name }} {{ user.last_name}}! </h2><p>usuario: {{ user.username}}</p>
+
+<style type="text/css"> .alto{ height: 200px; }</style>
+
+<section class="">
+
+<div class="row align-items-center alto">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body btn-primary">
+        <h5 style="color:white;" class="card-title">Cámaras</h5>
+        <p class="card-text">Listado de procedimietos iniciales y en curso.</p>
+        <a  href="/camara" class="btn btn-light">Ir a sección</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body btn-danger">
+        <h5 style="color:white;" class="card-title">Alarmas</h5>
+        <p class="card-text">Ubicación en tiempo real de los requerimientos y unidades.</p>
+        <a href="/alarmas" target="_blank" class="btn btn-light">Ir a sección</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- <div class="row align-items-center alto">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body btn-dark">
+        <h5 style="color:white;" class="card-title">Análisis</h5>
+        <p class="card-text">Sección de consulta de información y gráficos.</p>
+        <a href="#" class="btn btn-light">Ir a sección</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 ">
+    <div class="card">
+      <div class="card-body btn-info">
+        <h5 style="color:white;" class="card-title">Archivo</h5>
+        <p class="card-text">Repositorio virtual de documentación, ordenanzas, leyes y otros.</p>
+        <a href="/archivos/menu/" class="btn btn-light">Ir a sección</a>
+      </div>
+    </div>
+  </div>
+</div> -->
+</section>
+
+</div>
+{% else %}
+ <h1>Bienvenido al portal CENTRAL</h1>
+ <p>Lo invitamos a registrarse en el siguiente <a href="{% url 'signup' %}"   >enlace<a> <p>
+
+
+
+{% endif %}
+
+
+{% endblock %}
+
+
+{% block jquery %}
+
+
+
+{% endblock %}

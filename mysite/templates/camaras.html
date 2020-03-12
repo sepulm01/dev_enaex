@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load crispy_forms_tags %}
+
+<div class="container">
+    <div class="row">
+        <div class='col-sm-6 py-1'> 
+            <div class="form-group">
+                <p></p>
+                <form method="post" autocomplete="off">{% csrf_token %}
+                    {{ form|crispy }}
+                    <p></p>
+                    <input type="submit" class="form-control btn btn-primary" value="Guardar">
+                </form>
+            </div>
+            </div>
+        <div class='col-sm-6 py-1'> 
+            <br/>
+            {{imagen|safe}}
+            <br/><button id="clear" class="btn btn-outline-danger btn-sm">Limpiar</button>
+            <button id="guardar" class="btn btn-outline-success btn-sm">Fijar</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+$(function () {
+        if ($("#id_areas").val()){
+                var polyLines = JSON.parse($("#id_areas").val());
+            } else {
+                var polyLines = []
+            }
+        var canvas = document.getElementById("canvas"),
+            ctx = canvas.getContext("2d"),
+            offset = $("#canvas").offset(),
+            storedLines = [],
+            start = {x: 0, y: 0},
+            radius = 7;
+            draw();
+            
+
+        function canvasPosition(e) {
+            return {
+                x: parseInt(e.clientX - offset.left),
+                y: parseInt(e.clientY - offset.top)
+            };
+        }
+
+        $("#canvas").mousedown(function (e) {
+            var pos = canvasPosition(e);
+            if (hitStartCircle(pos)) {
+                polyLines.push(storedLines);
+                storedLines = [];
+                draw();
+            }
+            else
+            {
+                storedLines.push(pos);
+                update(pos);
+            }
+        })
+        .mousemove(function (e) {
+            update(canvasPosition(e));
+        });
+
+        // Draw completed polylines
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            $.each(polyLines, function (idx, polyLine) {
+                fillPolyline(polyLine);
+            });
+        }
+
+        // Update shape currently being drawn
+        function update(position) {
+            var len = storedLines.length;
+            if(len==0) return;
+
+            draw();
+            ctx.fillStyle = "green";
+            ctx.beginPath();
+            ctx.arc(storedLines[0].x, storedLines[0].y, radius, 0, 2 * Math.PI, false);
+            ctx.fill();
+            ctx.strokeStyle = "orange";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(storedLines[0].x, storedLines[0].y);
+            for(var i=1; i<len; ++i) {
+                ctx.lineTo(storedLines[i].x, storedLines[i].y)
+            }
+            ctx.lineTo(position.x, position.y);
+            ctx.stroke();
+
+
+        };
+
+        function hitStartCircle(pos) {
+            var start = storedLines[0] || {x:0, y:0},
+                dx = pos.x - start.x,
+                dy = pos.y - start.y;
+            return (dx * dx + dy * dy < radius * radius)
+        }
+
+        function fillPolyline(lines) {
+            ctx.strokeStyle = "red";
+            //ctx.fillStyle = "blue";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(lines[0].x, lines[0].y);
+            for (var i = 0; i < lines.length; i++) {
+                ctx.lineTo(lines[i].x, lines[i].y);
+            }
+            ctx.closePath();
+            //ctx.fill();
+            ctx.stroke();
+
+        }
+
+        $("#clear").click(function () {
+            polyLines = [];
+            draw();
+        });
+
+        $("#guardar").click(function () {
+            console.log('polyLines',polyLines)
+            puntos = JSON.stringify(polyLines);
+            $("#id_areas").val( puntos);
+            $.each(polyLines, function(i, item) {
+                console.log(item);
+            });
+            draw();
+        });
+});
+</script>
+
+{% endblock %}

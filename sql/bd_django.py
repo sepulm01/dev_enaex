@@ -25,7 +25,7 @@ class basedatos:
 			filas = []
 			for row in rows:
 				#print(row)
-				filas.append([row[0],row[1],row[3],row[4]])
+				filas.append([row[0],row[1],row[3],row[7]])
 			return filas
 
 		except Error as e:
