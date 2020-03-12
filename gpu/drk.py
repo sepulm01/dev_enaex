@@ -54,5 +54,5 @@ class Drk:
 			det = Boxes(detections)
 			self.isort=np.int32(det)  
 			
-			print("Deteccion en %.3f s y thresh %.2f" % (timer()-inicio, thresh) )
+			print("Deteccion en %.3f s y thresh_ %.2f" % (timer()-inicio, thresh) )
 		return self.isort

@@ -12,17 +12,21 @@ from __future__ import division
 import numpy as np
 import cv2 as cv
 from centroidtracker import CentroidTracker
-import darknet
-from drk import Drk
+#import darknet
+#from drk import Drk
 import queue
 import threading
 import time
 from timeit import default_timer as timer
+from datetime import datetime, timedelta
 from common import anorm2, draw_str
 import multiprocessing as mul
 import socket
 import random
 from struct import *
+import imagezmq
+from sql.bd_django import basedatos
+
 
 #q = queue.LifoQueue(maxsize=1000)
 input_q = queue.Queue(maxsize=1500)
@@ -149,6 +153,60 @@ class App:
 
     def run(self):
 
+        def update_alarma(camara,tiempo ,clase,cantidad,video):
+            print('Hilo:',threading.current_thread().getName(),'con identificador:',threading.current_thread().ident)
+            basedatos.alarma(camara,tiempo ,clase,cantidad,video) 
+        ##################### Areas #####################################################
+        def mapa_areas():
+            '''Carga areas desde el archivo areas.csv, entrega un objeto tipo mpltPath
+            y una lista con N np array (1x2) con los puntos x,y del perimetro del area.
+            Donde el N es el id del area o detector.
+            '''
+            areas = []
+            lista = []
+            your_list = []
+            with open('areas.csv', 'r') as f:
+                reader = csv.reader(f,delimiter=',')
+                your_list = list(reader)
+            for z in range(0,len(your_list)):
+                par = []
+                for i in range(0,len(your_list[z]),2):
+                    par.append([your_list[z][i],your_list[z][i+1]])
+                lista.append(par)
+            for w in range(0,len(lista)):
+                asd = np.array(lista[w], np.int32)
+                areas.append(asd)
+            #hace mapa de las areas
+            mapa = []
+            dibujo = []
+            for z in range(0,len(areas)): 
+                mapa.append(mpltPath.Path(areas[z]))
+                dibujo.append(areas[z])
+            print(len(mapa), len(dibujo),"mapa, dibujo")
+            return mapa, dibujo
+
+        def mapa_areas_bd(det_):
+            '''Carga areas desde base datos, entrega un objeto tipo mpltPath
+            y una lista con N np array (1x2) con los puntos x,y del perimetro del area.
+            Donde el N es el id del area o detector.
+            '''
+            areas = []
+            lista=[]
+            for z in det_:
+                par = []
+                for i in range(0,len(det_[z]),2):
+                    par.append([det_[z][i],det_[z][i+1]])
+                lista.append(par)
+            for w in range(0,len(lista)):
+                asd = np.array(lista[w], np.int32)
+                areas.append(asd)
+            mapa = []
+            dibujo = []
+            for z in range(0,len(areas)): 
+                mapa.append(mpltPath.Path(areas[z]))
+                dibujo.append(areas[z])
+            return mapa, dibujo
+
         ######SOCKETS###############
         def signal_handler(signal=None, frame=None):
             exit()
@@ -170,7 +228,7 @@ class App:
                 frame = drk_q.get()
                 drk_q.task_done()
                 drk_q.queue.clear()
-                print("drk_q ",drk_q.qsize())
+                #print("drk_q ",drk_q.qsize())
                 data = cv.imencode('.jpg', frame)[1].tostring()
                     # if sensib_q.empty() != True:
                 sensib=sensib_q.get()
@@ -270,10 +328,26 @@ class App:
             centroide=np.int32(centroide)
             matches=np.int32(matches)
             return matches, centroide
-
-        retardo = 4 
-        fuente =  '6_35.mp4'
+        #################### settings #######################
+        alarma = False
+        fecha = datetime.today().strftime('%Y-%m-%d')
+        hora = datetime.now().strftime("%H:%M:%S")
+        record=datetime.now()
+        retardo = 20 
+        conn = basedatos.create_connection()
+        disp=basedatos.cam_disp(conn)
+        print(disp)
+        fuente = disp[0][3]
+        basedatos.cam_ocupada(conn, 1,disp[0][0])
+        nombre_cam = disp[0][1]
+        cam_id = disp[0][0]
         cap = cv.VideoCapture(fuente)
+        _ret, frame = cap.read()
+        dim_y, dim_x, _ = frame.shape
+        id0 = 0
+        vidfile='output/'+str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
+        fourcc = cv.VideoWriter_fourcc(*'XVID') #XVID X264 
+        vid_writer = cv.VideoWriter(vidfile,fourcc, 20.0, (dim_x,dim_y))
         b_ground_sub = True
         bgshow = False
         bg_subtractor = cv.createBackgroundSubtractorMOG2(history=400, varThreshold = 20, detectShadows=True) #detecta mov de la camara
@@ -284,6 +358,7 @@ class App:
 
                 ###### SOCKETS ############################
         host =  '0.0.0.0'
+        #host = 'multiserver'
         port = 12347
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -304,26 +379,31 @@ class App:
         
         ######FIN SOCKETS###########################
 
+        #sender = imagezmq.ImageSender(connect_to='tcp://*:5566', REQ_REP=False)
+        sender = imagezmq.ImageSender(connect_to='tcp://localhost:5555')
+
         while(cap.isOpened()):
             _ret, frame = cap.read()
 
             if _ret == False:
                 print("termino flujo de video (ret==0).")
+                basedatos.cam_ocupada(conn, 0,disp[0][0])
                 break #TODO sacar en produccion
                 while _ret == False:
                     time.sleep(20)
                     cap = cv.VideoCapture(fuente)
                     _ret, frame = cap.read()
-            draw_str(frame, (10, 15), 'Streetflow.cl')
-            #if _ret:
-                #input_q.put(frame)
+            draw_str(frame, (10, 15), nombre_cam)
+            output_rgb = frame
+            if _ret:
+                input_q.put(frame)
                 #inp_q= input_q.qsize()
                 #drk_q.put(frame) # alimenta la cola del detector
                 #wqu= drk_q.qsize()
                 #print(inp_q)
-                # if self.frame_idx > retardo:
-                #     #output_rgb = cv.cvtColor(input_q.get(), cv.COLOR_RGB2BGR)
-                #     #input_q.task_done()
+                if self.frame_idx > retardo:
+                     output_rgb = cv.cvtColor(input_q.get(), cv.COLOR_RGB2BGR)
+                     input_q.task_done()
                 #     frame = input_q.get()
                 #     w= input_q.qsize()
                 #     dr= drk_q.qsize()
@@ -363,10 +443,26 @@ class App:
                 i_sort =isort_q.get()
                 isort_q.task_done()
                 isort_q.queue.clear()
-                print(i_sort)
+                print(i_sort, type(i_sort))
+                record=datetime.now()+timedelta(seconds=2)
+                
+                if record > datetime.now() and alarma == False:
+                    fecha = datetime.today().strftime('%Y-%m-%d')
+                    hora = datetime.now().strftime("%H:%M:%S")
+                    vidfile='output/'+str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
+                    vid_writer = cv.VideoWriter(vidfile,fourcc, 20.0, (dim_x,dim_y))
+                    alarma = True
+                    tiempo ,clase,cantidad,video = datetime.now(), 2, 2, vidfile
+                    basedatos.alarma(conn, cam_id,tiempo ,str(list(i_sort[:,4])),list(i_sort.shape)[0],video) 
+                    # hilo1 = threading.Thread(name='update_alarma', 
+                    #     target=update_alarma,
+                    #     args=(camara,tiempo ,clase,cantidad,video),
+                    #     daemon=False)
+                    # hilo1.start()
+
                 for e in i_sort:
                     x,y,a,b = e[0],e[1],e[2],e[3]
-                    cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1)
+                    cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1) # TODO recomponer para la pintana
             else:
                 i_sort = np.array([])
 
@@ -378,8 +474,19 @@ class App:
             # for e in capo.isort:
             #     x,y,a,b = e[0],e[1],e[2],e[3]
             #     cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1)
-
+            if record > datetime.now():
+                vid_writer.write(output_rgb)
+            else:
+                alarma = False
             cv.imshow("Frame", frame)
+
+            if self.frame_idx % 1200 == 0:
+                # cada 1200 frames actualiza estado y envia una foto a base de datos
+                data = cv.imencode('.jpg', frame)[1].tostring()
+                basedatos.cam_viva(conn, 1, 1, data, datetime.now())
+
+
+            #sender.send_image(nombre_cam, frame)
 
             ch = cv.waitKey(1)
             if ch == 27 :

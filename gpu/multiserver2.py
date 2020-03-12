@@ -69,6 +69,7 @@ class Detector:
                     threshold = sensib_q[i].get() 
                     #fr_numero = fr_num_q[i].get()
                     objetos=self.deteccion.dark(frame, threshold)
+                    #print("llamado a DRK")
                     isort_q[i].put(objetos)
 
             if datetime.datetime.now()-self.ahora>timedelta(seconds=2):
@@ -160,7 +161,7 @@ class Conexion(object):
                 except Exception as e:
                     print(e)
                     continue
-                    
+
             isort = []
             try:
                 if self.output.empty() != True: 
@@ -192,9 +193,7 @@ class Conexion(object):
         self.comienzo = False
         self.thread.join()
   
-  
 def Main(): 
-    #infiere = Drk()
     infiere = []
     host = "" 
     port = 12347
@@ -206,7 +205,6 @@ def Main():
     print("El socket esta atado al puerto", port)
     server_socket.listen(5)
     print("El socket esta escuchando...") 
-    
     detec_demon.start()
 
     while True: 
@@ -223,16 +221,10 @@ def Main():
             frame_q[addr[1]],
             sensib_q[addr[1]],
             addr[1] )
-        
-        # Comienza el hilo y su inicializador 
         client.start()
- 
-        #detec_demon.start()
-        #client.stop()
 
     server_socket.close()
     detec_demon.stop() 
-  
   
 if __name__ == '__main__': 
     Main() 
