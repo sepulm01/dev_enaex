@@ -152,7 +152,7 @@ class Conexion(object):
                 pass
             else:
                 try:
-                    frame = cv2.resize(frame,(416,416))
+                    #frame = cv2.resize(frame,(416,416))
                     if self.cola.empty()!= True: self.cola.queue.clear()
                     self.cola.put(frame)
                     #if self.fr_num.empty()!= True: self.fr_num.queue.clear()

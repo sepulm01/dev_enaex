@@ -108,7 +108,7 @@ cv2.setMouseCallback(winName,onmouse);
 
 if os.path.exists('areas.csv'):
     areas= mapa_areas()
-    #print(areas)
+    print(areas[0][0].shape)
 
 while True:
     if (selection_in_progress):

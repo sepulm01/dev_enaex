@@ -27,6 +27,7 @@ from struct import *
 import imagezmq
 from sql.bd_django import basedatos
 import json
+import matplotlib.path as mpltPath
 
 
 #q = queue.LifoQueue(maxsize=1000)
@@ -34,114 +35,6 @@ input_q = queue.Queue(maxsize=1500)
 drk_q = queue.LifoQueue(maxsize=1500)
 sensib_q = queue.Queue(maxsize=1500)
 isort_q  = queue.LifoQueue(maxsize=250)
-
-
-######################### Darknet ###################################################
-# netMain = None
-# metaMain = None
-# configPath = "./cfg/yolov3.cfg"
-# #configPath = "./cfg/yolov3-8clases.cfg"
-# weightPath = "./cfg/yolov3.weights" 
-# #weightPath = "./data/yolov3-uoct_final.weights"
-# #weightPath = "./data/yolov3-uoct_last.weights" 
-# #weightPath = "./data/yolov3-8clases_16000.weights" 
-# metaPath = "./cfg/coco.data"
-# if netMain is None:
-#     netMain = darknet.load_net_custom(configPath.encode(
-#         "ascii"), weightPath.encode("ascii"), 0, 1)  # batch size = 1
-# if metaMain is None:
-#     metaMain = darknet.load_meta(metaPath.encode("ascii"))
-# darknet_image = darknet.make_image(darknet.network_width(netMain),
-#                                 darknet.network_height(netMain),3)
-
-def dark(frame, thresh=0.75):
-    ''' Funcion que llama al modelo de deteccion, recive una imagen y el nivel de confianza y devuelve una matriz.
-    '''
-    antes=timer()
-    clases = [0,1,2,3,4,5,6,7,8,9] #clases a seguir
-
-    def convertBack(x, y, w, h):
-        xmin = int(round(x - (w / 2)))
-        xmax = int(round(x + (w / 2)))
-        ymin = int(round(y - (h / 2)))
-        ymax = int(round(y + (h / 2)))
-        return xmin, ymin, xmax, ymax
-
-    def Boxes(detections):
-        det = []
-        for detection in detections:
-            x, y, w, h = detection[2][0],\
-                detection[2][1],\
-                detection[2][2],\
-                detection[2][3]
-            xmin, ymin, xmax, ymax = convertBack(
-                float(x), float(y), float(w), float(h))
-            prob = round(float(detection[1]),2)*100
-            if int(detection[0].decode()) in clases: 
-                det.append([ xmin, ymin, xmax, ymax ,detection[0].decode(), prob])
-        return det
-
-    frame_rgb = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-    frame_resized = cv.resize(frame_rgb,
-                               (darknet.network_width(netMain),
-                                darknet.network_height(netMain)),
-                               interpolation=cv.INTER_LINEAR)
-
-    darknet.copy_image_from_bytes(darknet_image,frame_resized.tobytes())
-    detections = darknet.detect_image(netMain, metaMain, darknet_image, thresh)
-    #print(frame.shape, frame_resized.shape, "frame.shape, frame_resized" )
-    det = Boxes(detections)
-    isort=np.int32(det)
-    print("drk detect",timer()-antes)
-    return isort
-######################### Fin Darknet ###################################################
-
-
-
-class Detector:
-    ''' Demonio que corre automaticamente reciviendo las imagenes (frames) del flujo de video principal, mediante la colas drk_q
-    y devuelve una objeto numpy (matriz). La clase llama a la función dark, a quien le entrega el frame y la sensibilidad 
-    requerida para esa prediccion.
-    '''
-    def __init__(self):
-        self.isort = []
-        self.started = False
-        self.read_lock = threading.Lock()
-        print('deteccion ha empezado')
-
-#    def start(self):
-        # if self.started:
-        #     print('deteccion ha empezado')
-        #     return None
-        self.started = True
-        self.thread = threading.Thread(target=self.update, name='Detector-hilo',args=(),daemon=True)
-        self.thread.start()
-        return self
-
-    def update(self):
-        while self.started:
-            isort = self.read()
-            with self.read_lock:
-                self.isort = isort
-                #q.task_done()
-
-    def read(self):
-        with self.read_lock:
-            frame= drk_q.get()
-            #sensib = sensib_q.get()
-            self.isort = dark(frame,0.2)
-            drk_q.task_done()
-            drk_q.queue.clear()
-            #print(drk_q.qsize())
-            #sensib_q.task_done()
-            #sensib_q.queue.clear()
-        return self.isort
-
-    def stop(self):
-        self.started = False
-        print("stop hilo prejoin")
-        self.thread.join(timeout=2)
-        print("stop hilo postjoin")
 
 class App:
     def __init__(self):
@@ -153,59 +46,37 @@ class App:
         self.detect_interval = 10
 
     def run(self):
+        def totuple(a):
+            try:
+                return tuple(totuple(i) for i in a)
+            except TypeError:
+                return a
 
         def update_alarma(camara,tiempo ,clase,cantidad,video):
             print('Hilo:',threading.current_thread().getName(),'con identificador:',threading.current_thread().ident)
             basedatos.alarma(camara,tiempo ,clase,cantidad,video) 
         ##################### Areas #####################################################
-        def mapa_areas():
-            '''Carga areas desde el archivo areas.csv, entrega un objeto tipo mpltPath
-            y una lista con N np array (1x2) con los puntos x,y del perimetro del area.
-            Donde el N es el id del area o detector.
-            '''
-            areas = []
-            lista = []
-            your_list = []
-            with open('areas.csv', 'r') as f:
-                reader = csv.reader(f,delimiter=',')
-                your_list = list(reader)
-            for z in range(0,len(your_list)):
-                par = []
-                for i in range(0,len(your_list[z]),2):
-                    par.append([your_list[z][i],your_list[z][i+1]])
-                lista.append(par)
-            for w in range(0,len(lista)):
-                asd = np.array(lista[w], np.int32)
-                areas.append(asd)
-            #hace mapa de las areas
-            mapa = []
-            dibujo = []
-            for z in range(0,len(areas)): 
-                mapa.append(mpltPath.Path(areas[z]))
-                dibujo.append(areas[z])
-            print(len(mapa), len(dibujo),"mapa, dibujo")
-            return mapa, dibujo
 
-        def mapa_areas_bd(det_):
+        def mapa_areas_bd(det_): 
             '''Carga areas desde base datos, entrega un objeto tipo mpltPath
             y una lista con N np array (1x2) con los puntos x,y del perimetro del area.
             Donde el N es el id del area o detector.
             '''
-            areas = []
-            lista=[]
-            for z in det_:
-                par = []
-                for i in range(0,len(det_[z]),2):
-                    par.append([det_[z][i],det_[z][i+1]])
-                lista.append(par)
-            for w in range(0,len(lista)):
-                asd = np.array(lista[w], np.int32)
-                areas.append(asd)
-            mapa = []
-            dibujo = []
-            for z in range(0,len(areas)): 
-                mapa.append(mpltPath.Path(areas[z]))
-                dibujo.append(areas[z])
+            if det_ == '':
+                mapa, dibujo = '', ''
+            else:
+                jareas=json.loads(det_)
+                areas = []
+                for i in jareas:
+                    area = []
+                    for ii in i:
+                        area.append(list(ii.values()))
+                    areas.append(area)
+                mapas = []
+                dibujo = []
+                for a in areas:
+                    mapas.append(mpltPath.Path(a))
+                    dibujo.append(a)
             return mapa, dibujo
 
         ######SOCKETS###############
@@ -329,8 +200,10 @@ class App:
             centroide=np.int32(centroide)
             matches=np.int32(matches)
             return matches, centroide
+
         #################### settings #######################
-        actualizar = datetime.now()
+        area_mask = False # variable de mascara para la detección
+        actualizar = datetime.now() # Variable de update de estado de camara y envio de foto a base y website
         alarma = False
         fecha = datetime.today().strftime('%Y-%m-%d')
         hora = datetime.now().strftime("%H:%M:%S")
@@ -339,24 +212,17 @@ class App:
         conn = basedatos.create_connection()
         disp=basedatos.cam_disp(conn)
         print(disp)
+        sensibilidad = disp[0][2]
         fuente = disp[0][3]
+        if fuente == '0':
+            fuente = 0
         basedatos.cam_ocupada(conn, 1,disp[0][0])
         nombre_cam = disp[0][1]
         cam_id = disp[0][0]
-        jareas=json.loads(disp[0][3])
-        areas = []
-        for i in jareas:
-            area = []
-            for ii in i:
-                area.append(list(ii.values()))
-            areas.append(area)
-        mapas = []
-        dibujo = []
-        for a in areas:
-            mapas.append(mpltPath.Path(a))
-            dibujo.append(a)
-
-
+        mapa, dibujo=mapa_areas_bd(disp[0][4])
+        con = np.zeros((1,len(dibujo)+1)) # Matriz de congestion
+        con[0][0]=1 # Variable de congestion
+        intermitente = False # flag intermitencia en color de las areas.
         cap = cv.VideoCapture(fuente)
         _ret, frame = cap.read()
         dim_y, dim_x, _ = frame.shape
@@ -369,8 +235,15 @@ class App:
         bg_subtractor = cv.createBackgroundSubtractorMOG2(history=400, varThreshold = 20, detectShadows=True) #detecta mov de la camara
         winbGround = 'background subtraction'
         ct = CentroidTracker()
-        #capo = mul.Process(target=dark, args[frame, 0,5]) # inicialicia detector
-        #capo.start() # parte detector de objetos
+        mask_fg = np.ones(frame.shape, dtype = "uint8") # background sub
+        cv.rectangle(mask_fg,(0,0),(dim_y, dim_x),(255, 255, 255),-1) 
+        for i in range(0,len(dibujo)):
+            pts = np.array(dibujo[i], np.int32)
+            cv.fillPoly(mask_fg, [pts], (1, 1, 1))
+
+        targetSize = 416
+        x_scale = dim_x / targetSize
+        y_scale = dim_y / targetSize
 
                 ###### SOCKETS ############################
         host =  '0.0.0.0'
@@ -396,41 +269,42 @@ class App:
         ######FIN SOCKETS###########################
 
         #sender = imagezmq.ImageSender(connect_to='tcp://*:5566', REQ_REP=False)
-        sender = imagezmq.ImageSender(connect_to='tcp://localhost:5555')
+        #sender = imagezmq.ImageSender(connect_to='tcp://localhost:5555')
 
         while(cap.isOpened()):
             _ret, frame = cap.read()
 
             if _ret == False:
                 print("termino flujo de video (ret==0).", nombre_cam )
-                basedatos.cam_ocupada(conn, 0,disp[0][0])
+                
                 break #TODO sacar en produccion
                 while _ret == False:
                     time.sleep(20)
                     cap = cv.VideoCapture(fuente)
                     _ret, frame = cap.read()
             draw_str(frame, (10, 15), nombre_cam)
+
+            #Graba con retardo
             output_rgb = frame
             if _ret:
                 input_q.put(frame)
-                #inp_q= input_q.qsize()
-                #drk_q.put(frame) # alimenta la cola del detector
-                #wqu= drk_q.qsize()
-                #print(inp_q)
                 if self.frame_idx > retardo:
                      output_rgb = cv.cvtColor(input_q.get(), cv.COLOR_RGB2BGR)
                      input_q.task_done()
-                #     frame = input_q.get()
-                #     w= input_q.qsize()
-                #     dr= drk_q.qsize()
 
             frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
+            if area_mask: #Coloca una mascara al area de detección para limitar el n° de ids seguidor.
+                frame_msk = cv.add(mask_fg,frame)
+                draw_str(frame, (350, 40), 'Area')
+            else:
+                frame_msk = frame
+
             ############background sub #######################################
             if b_ground_sub:
-                #draw_str(vis, (350, 27), 'BG Sub')
-                #dst = cv.add(mask_fg,frame2bg) #frame2bg
-                fg_mask = bg_subtractor.apply(frame, None, 0.001) # back ground detector
+                draw_str(frame, (350, 27), 'BG Sub')
+                #dst = cv.add(mask_fg,frame_msk) #frame2bg
+                fg_mask = bg_subtractor.apply(frame_msk, None, 0.001) # back ground detector
                 fg_mask = filter_mask(fg_mask) # back ground detector
                 bg_detect,centroide = detect_mov(fg_mask)  # back ground detector
                 rects = []
@@ -450,10 +324,9 @@ class App:
                 bg_detect = np.array([])
 
             if len(bg_detect) > 0 and self.frame_idx % self.detect_interval == 0:
-                drk_q.put(frame) # alimenta la cola del detector
-                sensib_q.put(5)
+                drk_q.put(frame_msk) # alimenta la cola del detector
+                sensib_q.put(sensibilidad) # Sensibilidad de detección o nivel de confianza 
                 draw_str(frame, (10, 30), str(drk_q.qsize()))
-            #print("bg_detect", len(bg_detect) )
 
             if isort_q.empty() != True:
                 i_sort =isort_q.get()
@@ -475,10 +348,13 @@ class App:
                     #     args=(camara,tiempo ,clase,cantidad,video),
                     #     daemon=False)
                     # hilo1.start()
-
                 for e in i_sort:
                     x,y,a,b = e[0],e[1],e[2],e[3]
-                    cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1) # TODO recomponer para la pintana
+                    x = int(np.round(x * x_scale))
+                    y = int(np.round(y * y_scale))
+                    a = int(np.round(a * x_scale))
+                    b = int(np.round(b * y_scale))
+                    cv.rectangle(frame, (x, y), (a, b) , (255, 0, 255), 2) # TODO recomponer para la pintana
             else:
                 i_sort = np.array([])
 
@@ -494,7 +370,7 @@ class App:
                 vid_writer.write(output_rgb)
             else:
                 alarma = False
-            cv.imshow("Frame", frame)
+
 
             if actualizar < datetime.now():
                 # cada 1200 frames actualiza estado y envia una foto a base de datos
@@ -515,15 +391,16 @@ class App:
                         color = (0,0,255)
                         #intermitente = True
                 if intermitente:
-                    color = (0,0,255)
+                    color = (0,255,255)
                     if self.frame_idx % 10 == 0:
                         color = (0,255,255)
-                cv.polylines(vis,[dibujo[i]],True, color,2)
-                cv.fillPoly(mask_fg, [dibujo[i]], (1, 1, 1))
+                pts = np.array(dibujo[i], np.int32)
+                cv.polylines(frame,[pts],True, color,2)
+                #cv.fillPoly(mask_fg, pts, (1, 1, 1))
                 #cv.polylines(mask_fg,[dibujo[i]],True,(255, 255, 255), 1) # background sub
-                cv.putText(vis, str(i), totuple((dibujo[i])[0:1][0]), cv.FONT_HERSHEY_SIMPLEX, .7, (0, 255, 0),2)
+                cv.putText(frame, str(i), totuple((dibujo[i])[0:1][0]), cv.FONT_HERSHEY_SIMPLEX, .7, (0, 255, 0),2)
 
-
+            cv.imshow("Frame", frame)
             #sender.send_image(nombre_cam, frame)
 
             ch = cv.waitKey(1)
@@ -565,11 +442,13 @@ class App:
             self.frame_idx += 1
 
         cv.destroyAllWindows()
+        basedatos.cam_ocupada(conn, 0,disp[0][0])
 
 def main():
     print(__doc__)
     App().run()
     cv.destroyAllWindows()
+
 
 if __name__ == '__main__':
     main()

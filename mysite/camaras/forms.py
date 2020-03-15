@@ -26,7 +26,7 @@ class CamarasForm(forms.ModelForm):
 
         widgets = {
             'areas': forms.HiddenInput(),
-            'estado': TextInput(attrs={'class':'form-control'}),
+            #'estado': TextInput(attrs={'class':'form-control'}),
             'nombre': TextInput(attrs={'class':'form-control'}),
             'fuente': TextInput(attrs={'class':'form-control'}),
             'sensib': TextInput(attrs={'class':'form-control'}),

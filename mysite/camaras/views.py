@@ -42,7 +42,7 @@ def camara(request,id):
             print(request.POST, form.is_valid())
     else:
         form = CamarasForm(instance=instance)
-    imagen =  '<canvas id="canvas" width=412  height=412 style=" background: url(data:image/png;base64,%s) "></canvas>' % base64.b64encode(instance.image).decode("utf-8")
+    imagen =  '<canvas id="canvas" width=416  height=416 style=" background: url(data:image/png;base64,%s) "></canvas>' % base64.b64encode(instance.image).decode("utf-8")
     campos = {
     'form': form,
     'imagen': imagen,
