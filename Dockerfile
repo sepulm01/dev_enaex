@@ -42,6 +42,7 @@ RUN pip3 install mysql-connector-python
 RUN pip3 install psycopg2-binary
 RUN pip3 install cython
 RUN pip3 install imagezmq
+RUN pip3 install tzlocal
 
 
 # Setting up working directory 
@@ -51,10 +52,15 @@ WORKDIR /lab
 
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-COPY . .
+#COPY . .
 
 # Minimize image size 
 RUN (apt-get autoremove -y; \
      apt-get autoclean -y)
 
-CMD bash exec.sh
+#CMD bash exec.sh
+#CMD python3 detector_mul.py
+
+ENTRYPOINT [ "python3" ]
+
+CMD [ "detector_mul.py" ]

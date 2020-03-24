@@ -9,6 +9,8 @@ class Camara(models.Model):
     image = models.BinaryField(blank=True)
     actualizado = models.DateTimeField('Actualizado',blank=True, null=True,auto_now_add=False)
     areas = models.TextField('Areas',blank=True, null=True)
+    op_ini = models.TimeField('Inicio',blank=True, null=True,auto_now_add=False)
+    op_fin = models.TimeField('Fin',blank=True, null=True,auto_now_add=False)
 
     class Meta:
         verbose_name_plural = "Cámaras"

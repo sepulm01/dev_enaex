@@ -21,6 +21,8 @@ class CamarasForm(forms.ModelForm):
     'fuente',
     'actualizado',
     'areas',
+    'op_ini',
+    'op_fin',
         )
         model = models.Camara
 
@@ -30,6 +32,8 @@ class CamarasForm(forms.ModelForm):
             'nombre': TextInput(attrs={'class':'form-control'}),
             'fuente': TextInput(attrs={'class':'form-control'}),
             'sensib': TextInput(attrs={'class':'form-control'}),
+            'op_ini': TextInput(attrs={'class':'form-control'}),
+            'op_fin': TextInput(attrs={'class':'form-control'}),
             'actualizado': TextInput(attrs={'class':'form-control', 'readOnly':'true'}),
             }
         

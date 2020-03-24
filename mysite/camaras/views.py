@@ -2,7 +2,7 @@ from django.http import StreamingHttpResponse
 import cv2
 import threading
 from django.views.decorators.gzip import gzip_page
-import imagezmq
+#import imagezmq
 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -15,6 +15,8 @@ import base64
 from django.conf import settings
 import pytz
 from django.db.models.functions import Trunc
+import ffmpy
+import os
 
 SCL = pytz.timezone(settings.TIME_ZONE)
 
@@ -51,7 +53,7 @@ def camara(request,id):
 
 @login_required
 def lista_camaras(request):
-    camaras = Camara.objects.all()
+    camaras = Camara.objects.all().order_by('id')
     df = pd.DataFrame(camaras.values('id','nombre',  'estado', 'sensib', 'fuente' ))
     df["id"] = df["id"].apply(lambda x: '<a href="/camara/{0}">{0}</a>'.format(x))
     html = df.to_html(index=False,
@@ -67,16 +69,36 @@ def lista_alarmas(request):
     alarmas = Alarmas.objects.all().order_by('-tiempo')
     df = pd.DataFrame(alarmas.values('id','camara_id__nombre' ,'tiempo','clase','cantidad' ,'video', 'recibido',Fecha=Trunc('tiempo', 'second', tzinfo=SCL)))
     df['Fecha']=fformato(df['Fecha'])
+    df["id"] = df["id"].apply(lambda x: '<a href="/video/{0}">{0}</a>'.format(x))
     df.rename(columns={
             'camara_id__nombre':'Cámara',
             'clase': 'Clases Objetos',
             'cantidad': 'Cantidad',
             }, inplace=True)
-    html = df.to_html(columns=['Cámara','Fecha','Cantidad','Clases Objetos',],
+
+    html = df.to_html(columns=['Cámara','Fecha','Cantidad','Clases Objetos','id'],
         index=False,
         escape=False,
         render_links=True,
         justify='center',
         classes=['table table-hover'],
+        table_id='alarmas_id',
         )
     return render(request, 'alarmas_list.html', {'tabla':html})
+
+def video(request, id):
+    alarma = Alarmas.objects.get(pk=id)
+    path = '/home/martin/Documentos/dev_enaex/mysite/media/alarmas/'
+    file = path + alarma.video
+    output = path + 'output.mp4'
+    os.remove(output)
+    ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
+    ff.run()
+    video = '/media/alarmas/output.mp4'
+    content = {
+    'video':video,
+     'id':alarma.id,
+     'tiempo':alarma.tiempo,
+     'camara':alarma.camara,
+     }
+    return render(request, 'video.html', content)

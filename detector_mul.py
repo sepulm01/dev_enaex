@@ -24,17 +24,22 @@ import multiprocessing as mul
 import socket
 import random
 from struct import *
-import imagezmq
-from sql.bd_django import basedatos
+#import imagezmq
+#from sql.bd_django import basedatos
+from sql.basedatospg import bdremota
+
 import json
 import matplotlib.path as mpltPath
+import sys
+import pytz
+from tzlocal import get_localzone
 
-
-#q = queue.LifoQueue(maxsize=1000)
+no_resetear = True
 input_q = queue.Queue(maxsize=1500)
 drk_q = queue.LifoQueue(maxsize=1500)
 sensib_q = queue.Queue(maxsize=1500)
 isort_q  = queue.LifoQueue(maxsize=250)
+tz=get_localzone()
 
 class App:
     def __init__(self):
@@ -43,7 +48,7 @@ class App:
         self.tracks = []
         self.frame_idx = 0
         self.anchos_mx = np.zeros((4,4),dtype=int)
-        self.detect_interval = 10
+
 
     def run(self):
         def totuple(a):
@@ -52,9 +57,6 @@ class App:
             except TypeError:
                 return a
 
-        def update_alarma(camara,tiempo ,clase,cantidad,video):
-            print('Hilo:',threading.current_thread().getName(),'con identificador:',threading.current_thread().ident)
-            basedatos.alarma(camara,tiempo ,clase,cantidad,video) 
         ##################### Areas #####################################################
 
         def mapa_areas_bd(det_): 
@@ -62,8 +64,9 @@ class App:
             y una lista con N np array (1x2) con los puntos x,y del perimetro del area.
             Donde el N es el id del area o detector.
             '''
-            if det_ == '':
-                mapa, dibujo = '', ''
+            print(det_)
+            if det_ == '' or det_ == None:
+                mapas, dibujo = '', ''
             else:
                 jareas=json.loads(det_)
                 areas = []
@@ -77,9 +80,10 @@ class App:
                 for a in areas:
                     mapas.append(mpltPath.Path(a))
                     dibujo.append(a)
-            return mapa, dibujo
+            return mapas, dibujo
 
         ######SOCKETS###############
+
         def signal_handler(signal=None, frame=None):
             exit()
 
@@ -110,7 +114,6 @@ class App:
                 #    print("fallo en colas get")
                  
                 if ret:
-                  
                     try:
                         client_socket.send(data)
                         #frm_num=int(cap.get(1))
@@ -201,40 +204,83 @@ class App:
             matches=np.int32(matches)
             return matches, centroide
 
+        ##################### turno ###########################
+        def en_turno(ini,fin):
+            ahora=datetime.now().time() # ahorita mismo.
+            cero_horas = datetime.strptime('00:00:00.0', '%H:%M:%S.%f')
+            media_noche = datetime.strptime('23:59:59.0', '%H:%M:%S.%f')
+            if ini == None or fin == None:
+                return True
+            else:
+                if ini < fin: # operación normal
+                    if ini < ahora and ahora < fin:
+                        return True
+                    else:
+                        return False
+                elif ini > fin: # de un dia para el otro
+                    if ini < ahora and ahora < media_noche.time():
+                        return True
+                    elif cero_horas.time() < ahora and ahora < fin:
+                        return True
+                    else:
+                        return False
+
         #################### settings #######################
         area_mask = False # variable de mascara para la detección
-        actualizar = datetime.now() # Variable de update de estado de camara y envio de foto a base y website
+        actualizar = datetime.now(tz) # Variable de update de estado de camara y envio de foto a base y website
         alarma = False
         fecha = datetime.today().strftime('%Y-%m-%d')
-        hora = datetime.now().strftime("%H:%M:%S")
-        record=datetime.now()
+        hora = datetime.now(tz).strftime("%H:%M:%S")
+        record=datetime.now(tz)
         retardo = 20 
-        conn = basedatos.create_connection()
-        disp=basedatos.cam_disp(conn)
+        #conn = basedatos.create_connection()
+        #disp=basedatos.cam_disp(conn)
+        conn = bdremota()
+        disp=bdremota.cam_disp(conn)
+        while 1:
+            if disp != []:
+                bdremota.cam_ocupada(conn, True,disp[0][0])
+                break
+            else:
+                #disp=basedatos.cam_disp(conn)
+                disp=bdremota.cam_disp(conn)
+                print("esperando camara disponible")
+                time.sleep(5)
+
         print(disp)
-        sensibilidad = disp[0][2]
-        fuente = disp[0][3]
+        sensibilidad = disp[0][3]
+        fuente = disp[0][4]
         if fuente == '0':
             fuente = 0
-        basedatos.cam_ocupada(conn, 1,disp[0][0])
+
         nombre_cam = disp[0][1]
         cam_id = disp[0][0]
-        mapa, dibujo=mapa_areas_bd(disp[0][4])
+        fin = disp[0][8] # inicio de turno operación
+        ini = disp[0][9] # fin turno operacion
+        turno=en_turno(ini,fin)
+        print('Turno:',turno)
+        mapa, dibujo=mapa_areas_bd(disp[0][7])
         con = np.zeros((1,len(dibujo)+1)) # Matriz de congestion
         con[0][0]=1 # Variable de congestion
-        intermitente = False # flag intermitencia en color de las areas.
+        
         cap = cv.VideoCapture(fuente)
         _ret, frame = cap.read()
         dim_y, dim_x, _ = frame.shape
         id0 = 0
-        vidfile='output/'+str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
-        fourcc = cv.VideoWriter_fourcc(*'XVID') #XVID X264 
-        vid_writer = cv.VideoWriter(vidfile,fourcc, 20.0, (dim_x,dim_y))
+        output_dir = 'mysite/media/alarmas/'
+        vidfile=str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
+        v_path = output_dir+vidfile
+        #fourcc = cv.VideoWriter_fourcc(*'XVID') #XVID X264 
+        fourcc = cv.VideoWriter_fourcc(*'XVID')
+        vid_writer = cv.VideoWriter(v_path,fourcc, 20.0, (dim_x,dim_y))
+        
         b_ground_sub = True
         bgshow = False
         bg_subtractor = cv.createBackgroundSubtractorMOG2(history=400, varThreshold = 20, detectShadows=True) #detecta mov de la camara
         winbGround = 'background subtraction'
+        
         ct = CentroidTracker()
+
         mask_fg = np.ones(frame.shape, dtype = "uint8") # background sub
         cv.rectangle(mask_fg,(0,0),(dim_y, dim_x),(255, 255, 255),-1) 
         for i in range(0,len(dibujo)):
@@ -244,18 +290,35 @@ class App:
         targetSize = 416
         x_scale = dim_x / targetSize
         y_scale = dim_y / targetSize
+        intermitente = False # flag intermitencia en color de las areas.
 
-                ###### SOCKETS ############################
+        ###### SOCKETS ############################
+        conecto = True
         host =  '0.0.0.0'
-        #host = 'multiserver'
+        #host = '10.0.2.4'
         port = 12347
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        client_socket.connect((host, port))
+        try: 
+            client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            print ("Socket creado exitosamente")
+        except socket.error as err: 
+            print ("fallo la creación del socket con error %s" %(err))
 
-        info = client_socket.recv(1024)
-        print('Recibido', repr(info))
-        info = repr(info)
+        try: 
+            host_ip = socket.gethostbyname(host) 
+        except socket.gaierror: 
+            print ("there was an error resolving the host")
+        while conecto:
+            try:
+                client_socket.connect((host, port))
+                info = client_socket.recv(1024)
+                print('Recibido', repr(info))
+                info = repr(info)
+                conecto = False
+            except:
+                print("error")
+            print("esperando servidor GPU en %s:%s" %(host,port) )
+            time.sleep(2)
 
         sckt_ret = threading.Event()
         sckt_ret.set()
@@ -267,11 +330,8 @@ class App:
         hilo10.start()
         
         ######FIN SOCKETS###########################
-
-        #sender = imagezmq.ImageSender(connect_to='tcp://*:5566', REQ_REP=False)
-        #sender = imagezmq.ImageSender(connect_to='tcp://localhost:5555')
-
         while(cap.isOpened()):
+            #print('input_q:%s,drk_q:%s,sensib_q:%s,isort_q:%s' % (input_q.qsize(),drk_q.qsize(),sensib_q.qsize(),isort_q.qsize()) )
             _ret, frame = cap.read()
 
             if _ret == False:
@@ -333,21 +393,18 @@ class App:
                 isort_q.task_done()
                 isort_q.queue.clear()
                 print(i_sort)
-                record=datetime.now()+timedelta(seconds=2)
+                record=datetime.now(tz)+timedelta(seconds=2)
                 
-                if record > datetime.now() and alarma == False:
+                if record > datetime.now(tz) and alarma == False and turno:
                     fecha = datetime.today().strftime('%Y-%m-%d')
-                    hora = datetime.now().strftime("%H:%M:%S")
-                    vidfile='output/'+str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
-                    vid_writer = cv.VideoWriter(vidfile,fourcc, 20.0, (dim_x,dim_y))
+                    hora = datetime.now(tz).strftime("%H:%M:%S")
+                    vidfile=str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
+                    v_path = output_dir+vidfile
+                    vid_writer = cv.VideoWriter(v_path,fourcc, 20.0, (dim_x,dim_y))
                     alarma = True
-                    tiempo ,clase,cantidad,video = datetime.now(), 2, 2, vidfile
-                    basedatos.alarma(conn, cam_id,tiempo ,str(list(i_sort[:,4])),list(i_sort.shape)[0],video) 
-                    # hilo1 = threading.Thread(name='update_alarma', 
-                    #     target=update_alarma,
-                    #     args=(camara,tiempo ,clase,cantidad,video),
-                    #     daemon=False)
-                    # hilo1.start()
+                    #tiempo ,clase,cantidad = datetime.now(tz), 2, 2, vidfile
+                    bdremota.alarma(conn, cam_id,datetime.now(tz) ,str(list(i_sort[:,4])),list(i_sort.shape)[0],vidfile) 
+                    #bdremota.alarma(conn, 1,tiempo ,1,3,vidfile) 
                 for e in i_sort:
                     x,y,a,b = e[0],e[1],e[2],e[3]
                     x = int(np.round(x * x_scale))
@@ -366,19 +423,27 @@ class App:
             # for e in capo.isort:
             #     x,y,a,b = e[0],e[1],e[2],e[3]
             #     cv.rectangle(frame, (x, y), (a, b) , (255, 255, 255), 1)
-            if record > datetime.now():
+            if record > datetime.now(tz):
                 vid_writer.write(output_rgb)
             else:
                 alarma = False
 
 
-            if actualizar < datetime.now():
-                # cada 1200 frames actualiza estado y envia una foto a base de datos
+            if actualizar < datetime.now(tz):
+                # 60s actualiza estado y envia una foto a base de datos
                 #, est, pk, img, actualizado):
                 data = cv.imencode('.jpg', frame)[1].tostring()
-                basedatos.cam_viva(conn, 1, cam_id, data, datetime.now())
-                print("Actualizado estado en ",self.frame_idx) 
-                actualizar = datetime.now() + timedelta(seconds=60)
+                #basedatos.cam_viva(conn, 1, cam_id, data, datetime.now(tz))
+                #bdremota.cam_viva(conn, True, cam_id, data, datetime.now(tz))
+                disp = bdremota.cam_viva(conn, True, cam_id, data, datetime.now(tz))
+                
+                actualizar = datetime.now(tz) + timedelta(seconds=60)
+                print(disp,"disp\n", len(disp))
+                fin = disp[0][8] # inicio de turno operación
+                ini = disp[0][9] # fin turno operacion
+                turno=en_turno(ini,fin)
+
+                print("Actualizado estado en ",self.frame_idx, 'y esta en el turno?',turno) 
 
             for i in range(0,len(dibujo)):
                 color = (0,255,0)
@@ -405,7 +470,8 @@ class App:
 
             ch = cv.waitKey(1)
             if ch == 27 :
-#                capo.stop()
+                no_resetear = False
+                print('no_resetear',no_resetear)
                 break
             if ch == ord('n'): 
                 if bgshow:
@@ -418,36 +484,27 @@ class App:
                     b_ground_sub = False
                 else:
                     b_ground_sub = True
-            if ch == ord('g'):
-                if gammashow:
-                    gammashow = False
-                else:
-                    gammashow = True
+
             if ch == ord('a'):
                 if area_mask:
                     area_mask = False
                 else:
                     area_mask = True
-            if ch == ord('v'):
-                if graba_video:
-                    graba_video = False
-                else:
-                    graba_video = True
-            if ch == ord('r'):
-                if graba_video:
-                    re_entrenar = False
-                else:
-                    graba_video = True
-
             self.frame_idx += 1
 
         cv.destroyAllWindows()
-        basedatos.cam_ocupada(conn, 0,disp[0][0])
+        bdremota.cam_ocupada(conn, False,disp[0][0])
+        print(self.frame_idx, 'self.frame_idx') 
 
 def main():
-    print(__doc__)
-    App().run()
-    cv.destroyAllWindows()
+    while no_resetear:
+        print('no_resetear',no_resetear)
+        print(__doc__)
+        App().run()
+        cv.destroyAllWindows()
+        disp=None
+        with input_q.mutex:
+            input_q.queue.clear()
 
 
 if __name__ == '__main__':

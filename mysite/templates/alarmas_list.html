@@ -6,3 +6,31 @@
 </div>
 
 {% endblock %}
+{% block jquery %}
+$.fn.dataTable.moment( 'DD/MM/YYYY HH:mm' );
+
+var table =    $(alarmas_id).DataTable( {
+        select: true,
+        "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json"
+            },
+        //dom: 'Bfrtip',
+        buttons: [
+            'csv', 'excel', 
+                    ]
+    } );
+
+table
+    .order( [ 1, 'desc' ] )
+    .draw();
+
+    $('#alarmas_id tbody').on('click', 'tr', function () {
+        var data = table.row( this ).data();
+        console.log( 'You clicked on '+data[0]+'\'s row' );
+    } );
+
+
+
+{% endblock %}
+
+

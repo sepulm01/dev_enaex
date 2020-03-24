@@ -17,7 +17,9 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path 
 from django.conf.urls import include, url
-from camaras.views import home, camara, lista_camaras, lista_alarmas
+from camaras.views import home, camara, lista_camaras, lista_alarmas, video
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     #path('accounts/', include('accounts.urls')), # new
@@ -29,4 +31,9 @@ urlpatterns = [
     path('camara/<int:id>', camara, name='camara'),
     path('camara/', lista_camaras, name='lista_camaras'),
     path('alarmas/', lista_alarmas, name='lista_alarmas'),
+    path('video/<int:id>/', video, name='video'),
 ]
+
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
