@@ -1,35 +1,90 @@
 {% extends 'base.html' %}
 {% block content %}
+<p></p>
 
 <div class="container">
-{{tabla|safe}}
+
+<div id="events2"></div>
+<table id="test_table" class="display" width="100%"></table>
 </div>
 
+{% csrf_token %}
 {% endblock %}
 {% block jquery %}
+var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+    $('.loader').show();
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+    },
+      complete: function(){
+     $('.loader').hide();
+  },
+  success: function() {
+  //$('#loader').hide();
+}
+});
 $.fn.dataTable.moment( 'DD/MM/YYYY HH:mm' );
-
-var table =    $(alarmas_id).DataTable( {
-        select: true,
+var elegidos = [];
+var json={{ jtabla | safe }};
+var col = json["columns"];
+console.log({{col|safe}});
+var tabla =   $('#test_table').DataTable({
+         data: json["data"],
+        "columns": {{col|safe}},
+        dom: 'Bfrtip',
         "language": {
-                "url": "https://cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json"
-            },
-        //dom: 'Bfrtip',
+        "url": "https://cdn.datatables.net/plug-ins/1.10.20/i18n/Spanish.json"
+             },
+        select: true,
+        "order": [[ 1, "desc" ]],
         buttons: [
-            'csv', 'excel', 
-                    ]
-    } );
-
-table
-    .order( [ 1, 'desc' ] )
-    .draw();
-
-    $('#alarmas_id tbody').on('click', 'tr', function () {
-        var data = table.row( this ).data();
-        console.log( 'You clicked on '+data[0]+'\'s row' );
-    } );
-
-
+        {
+            text: 'Selecciona todo',
+            action: function () {
+                tabla.rows().select();
+            }
+        },
+        {
+            text: 'Desselecionar',
+            action: function () {
+                tabla.rows().deselect();
+            }
+        },
+        {
+            text: 'Borrar selecionados',
+            action: function() {
+                if (confirm("¿Esta seguro de borrar los registros seleccionados?")) {
+                var elegidos = [];
+                var seleccion = tabla.rows( { selected: true } );
+                var count = seleccion.count();
+                var rowData = seleccion.data().toArray();
+                rowData.forEach(function(item, index, array) {
+                    let fila = item
+                    fila = fila[0].split(">")[1].split("<")[0];
+                    elegidos.push(fila);
+                });
+                console.log(elegidos);
+                $.ajax({
+                  type: "POST",
+                  url: /borra_alarmas/,
+                  data: {coment : elegidos,},
+                  success: function(data){ 
+                  location.reload();
+                  console.log("OK")
+                        },
+                    });
+                }
+            }
+        }
+        ]
+        } );
 
 {% endblock %}
 

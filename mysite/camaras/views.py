@@ -17,8 +17,10 @@ import pytz
 from django.db.models.functions import Trunc
 import ffmpy
 import os
+from django.shortcuts import redirect
 
 SCL = pytz.timezone(settings.TIME_ZONE)
+path = '/home/martin/Documentos/dev_enaex/mysite/media/alarmas/'
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':
@@ -64,7 +66,7 @@ def lista_camaras(request):
         )
     return render(request, 'camaras_list.html', {'tabla':html})
 
-@login_required
+#@login_required
 def lista_alarmas(request):
     alarmas = Alarmas.objects.all().order_by('-tiempo')
     df = pd.DataFrame(alarmas.values('id','camara_id__nombre' ,'tiempo','clase','cantidad' ,'video', 'recibido',Fecha=Trunc('tiempo', 'second', tzinfo=SCL)))
@@ -75,6 +77,13 @@ def lista_alarmas(request):
             'clase': 'Clases Objetos',
             'cantidad': 'Cantidad',
             }, inplace=True)
+    df=df.drop(columns=['video', 'recibido','tiempo'])
+    jtabla=df.to_json(orient='split', index=False,)
+    col = []
+    for i in df.columns:
+        fo = {}
+        fo["title"] = i
+        col.append(fo)
 
     html = df.to_html(columns=['Cámara','Fecha','Cantidad','Clases Objetos','id'],
         index=False,
@@ -83,15 +92,37 @@ def lista_alarmas(request):
         justify='center',
         classes=['table table-hover'],
         table_id='alarmas_id',
+        max_rows=100,
         )
-    return render(request, 'alarmas_list.html', {'tabla':html})
+    return render(request, 'alarmas_list.html', {'tabla':html, 'jtabla':jtabla, 'col':col})
+
+def borra_alarmas(request):
+    q = request.POST
+    lista = q.getlist('coment[]')
+    l1 = []
+    for i in lista:
+        l1.append(int(i))
+    print(type(l1),l1)
+    selec = Alarmas.objects.filter(pk__in=l1)
+    for i in selec.values('video'):
+        print(i['video'])
+        try:
+            os.remove(path + i['video'])
+        except:
+            print("error borrando",i['video'])
+            pass
+    selec.delete()
+    return redirect('/alarmas/')
 
 def video(request, id):
     alarma = Alarmas.objects.get(pk=id)
-    path = '/home/martin/Documentos/dev_enaex/mysite/media/alarmas/'
+
     file = path + alarma.video
     output = path + 'output.mp4'
-    os.remove(output)
+    try:
+        os.remove(output)
+    except:
+        pass
     ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
     ff.run()
     video = '/media/alarmas/output.mp4'
