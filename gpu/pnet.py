@@ -121,6 +121,7 @@ if os.name == "nt":
 else:
     #lib = CDLL("./libdarknet.so", RTLD_GLOBAL)
     lib = CDLL("/darknet/libdarknet.so", RTLD_GLOBAL)
+    #ib = CDLL("yolo4/libdarknet.so", RTLD_GLOBAL)
 lib.network_width.argtypes = [c_void_p]
 lib.network_width.restype = c_int
 lib.network_height.argtypes = [c_void_p]

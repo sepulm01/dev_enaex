@@ -20,7 +20,7 @@ import os
 from django.shortcuts import redirect
 
 SCL = pytz.timezone(settings.TIME_ZONE)
-path = '/home/martin/Documentos/dev_enaex/mysite/media/alarmas/'
+path = '/home/martin/Documents/dev_enaex/mysite/media/alarmas/'
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':

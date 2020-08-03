@@ -1,4 +1,5 @@
 import pnet
+#import darknet as pnet #yolo4
 import cv2
 import numpy as np
 from timeit import default_timer as timer
@@ -11,6 +12,8 @@ class Drk:
 		self.metaMain = None
 		self.configPath = "net.cfg"
 		self.weightPath = "net.wei"
+		#self.configPath = "yolo4/yolov4.cfg" # yolo4
+		#self.weightPath = "yolo4/yolov4.weights" # yolo4
 		self.metaPath = "cat.dat"
 		if self.netMain is None:
 			self.netMain = pnet.load_net_custom(self.configPath.encode(
@@ -21,7 +24,7 @@ class Drk:
 			pnet.network_height(self.netMain),3)
 
 	def dark(self, frame, thresh=0.75):
-		clases = [0,1,2,3,4,5,6,7] #clases a seguir
+		clases = [0,2,3,4,5,6,7,8,9,10] #clases a seguir
 		
 		def convertBack(x, y, w, h):
 			xmin = int(round(x - (w / 2))) 

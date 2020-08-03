@@ -21,6 +21,7 @@ from drk import Drk
 import queue
 from struct import *
 import logging
+from timeit import default_timer as timer
   
 # Diccionario de colas a manejar.
 frame_q = {}
@@ -58,18 +59,25 @@ class Detector:
         return self
 
     def read(self):
-        print("paso x read")
+        print("paso x read hu hu")
         logger.debug("Detector.read:self.read_lock ")
         while self.started:
         #with self.read_lock:
             for i in list(frame_q):
-                
-                if frame_q[i].empty() != True and sensib_q[i].empty() != True :
+                # if frame_q[i].empty() != True and sensib_q[i].empty() != True :
+                #     frame = frame_q[i].get()
+                #     threshold = sensib_q[i].get() 
+                #     objetos=self.deteccion.dark(frame, threshold)
+                #     isort_q[i].put(objetos)
+                if frame_q[i].empty() != True:
                     frame = frame_q[i].get()
-                    threshold = sensib_q[i].get() 
-                    #fr_numero = fr_num_q[i].get()
+                    #largo = frame_q[i].qsize()
+                    #print(largo)
+                    if sensib_q[i].empty() != True :
+                        threshold = sensib_q[i].get()
+                    else:
+                        threshold = 0.75
                     objetos=self.deteccion.dark(frame, threshold)
-                    #print("llamado a DRK")
                     isort_q[i].put(objetos)
 
             if datetime.datetime.now()-self.ahora>timedelta(seconds=2):
@@ -114,12 +122,14 @@ class Conexion(object):
     def threaded(self):
         print('inicia hilo',get_ident() )
 
-        self.client_socket.setblocking(1)
+        self.client_socket.setblocking(True)
 
         while self.comienzo:
+
             print("se")
             data = b''
             while 1:
+                inicio2=timer()
                 try:
                     r = self.client_socket.recv(90456)
                     if len(r) == 0:
@@ -139,11 +149,13 @@ class Conexion(object):
                         else:
                             self.sensib.queue.clear()
                             self.sensib.put(0.75)
+                            break
                     data += r
                 except Exception as e:
                     print(e)
                     break
                     continue
+                #print("tiempo de Recepcion %.3f" %(timer()-inicio2))
             #print(data,"data")
             nparr = np.fromstring(data, np.uint8)
             if nparr.shape[0]>0:
@@ -176,10 +188,10 @@ class Conexion(object):
                     self.client_socket.send(isort)
                     self.client_socket.send(b"FIN!")
                     #print(isort)
-
             except socket.error:
                 print("isort no enviado")
                 pass
+
         print(threading.enumerate())
         #borra_q.put(self.id_)
         print("cerrando conexion")
@@ -201,7 +213,7 @@ def Main():
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     #server_socket.setblocking(0)
     server_socket.bind((host, port))
-    #server_socket.settimeout(5)
+    #server_socket.settimeout(1)
     print("El socket esta atado al puerto", port)
     server_socket.listen(5)
     print("El socket esta escuchando...") 
