@@ -82,6 +82,8 @@ class Detector:
 
             if datetime.datetime.now()-self.ahora>timedelta(seconds=2):
                 print(threading.current_thread(), datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                for i in list(frame_q):
+                    print(frame_q[i].qsize(),'frame_q',i)
                 self.ahora = datetime.datetime.now()
 
             if borra_q.empty() != True:

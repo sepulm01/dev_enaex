@@ -21,6 +21,7 @@ import scipy.stats
 from scipy.spatial import distance as dist
 from scipy import stats
 import matplotlib.path as mpltPath
+import os
 
 drk_q = queue.LifoQueue(maxsize=1500)
 sensib_q = queue.Queue(maxsize=1500)
@@ -173,6 +174,25 @@ def centroides(x,y,a,b):
     cy = y + int((y-b)/2)
     return cx,cy 
 
+def hist_corr(src_base,src_test1):
+    ''' devuelve la correlación entre los histogramas de las dos imágenes, 1 es, perfecto 0 es malo'''
+    hsv_base = cv.cvtColor(src_base, cv.COLOR_BGR2HSV)
+    hsv_test1 = cv.cvtColor(src_test1, cv.COLOR_BGR2HSV)
+    h_bins = 50
+    s_bins = 60
+    histSize = [h_bins, s_bins]
+    # hue varies from 0 to 179, saturation from 0 to 255
+    h_ranges = [0, 180]
+    s_ranges = [0, 256]
+    ranges = h_ranges + s_ranges # concat lists
+    # Use the 0-th and 1-st channels
+    channels = [0, 1]
+    hist_base = cv.calcHist([hsv_base], channels, None, histSize, ranges, accumulate=False)
+    cv.normalize(hist_base, hist_base, alpha=0, beta=1, norm_type=cv.NORM_MINMAX)
+    hist_test1 = cv.calcHist([hsv_test1], channels, None, histSize, ranges, accumulate=False)
+    cv.normalize(hist_test1, hist_test1, alpha=0, beta=1, norm_type=cv.NORM_MINMAX)
+    return cv.compareHist(hist_base, hist_test1, 0)
+
 
 ############ SETTINGS ################################################
 youtube = False
@@ -188,14 +208,17 @@ if youtube:
     xcr, ycr, hcr, wcr = 1280, 580, 416, 416
 else:
     fuente = 'videos/otros/bellavista9am.mp4'
-    # fuente = 'videos/rot.mp4'
-    # fuente = 'videos/bici4pm.mp4' 
-    # fuente = 'videos/bici8am.mp4'
-    # fuente = 'videos/2019-05-07_07:50:41_0.avi.mp4'
-    fuente = 'videos/oclusion.mp4'
+    fuente = 'videos/rot.mp4'
+    #fuente = 'videos/rot_bus.mp4'
+    #fuente = 'videos/bici4pm.mp4' 
+    #fuente = 'videos/2019-04-28_15:15:37_0.avi.mp4'
+    #fuente = 'videos/bici8am.mp4'
+    #fuente = 'videos/2019-05-07_07:50:41_0.avi.mp4'
+    #fuente = 'videos/oclusion.mp4'
     capture = cv2.VideoCapture(fuente)
     #xcr, ycr, hcr, wcr = 130, 20, 416, 416 # rot
-    xcr, ycr, hcr, wcr = 0, 20, 416, 416
+    xcr, ycr, hcr, wcr = 0, 0, 416, 416
+capture.set(1,1700)
 
 cv2.namedWindow('Streetflow.cl',cv2.WINDOW_AUTOSIZE)
 gamma = 0.20
@@ -207,13 +230,13 @@ cv2.createTrackbar('Ajuste Gamma', 'Streetflow.cl', gamma_init, gamma_max, on_ga
 
 ret, img = capture.read()
 scale_percent = 100 # percent of original size
-width = int(img.shape[1] * scale_percent / 80)
-height = int(img.shape[0] * scale_percent / 80)
+width = int(img.shape[1] * scale_percent / 100)
+height = int(img.shape[0] * scale_percent / 100)
 dim = (width, height)
 
 frame_idx = 0
 detect_interval =  7 #7 ideal rotonda
-retardo = 7 #7 Var retardo del flujo de video para que la GPU tenga tiempo de procesar la imagen actual
+retardo = 9 #9 Var retardo del flujo de video para que la GPU tenga tiempo de procesar la imagen actual
 x_scale, y_scale = 1, 1
 sens = 75
 fps = capture.get(cv2.CAP_PROP_FPS)
@@ -222,7 +245,7 @@ prev = 0
 
 b_ground_sub = True
 bgshow = False
-bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=400, varThreshold = 50, detectShadows=False) #detecta mov de la camara
+bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=400, varThreshold = 55, detectShadows=False) #detecta mov de la camara
 winbGround = 'background subtraction'
 ct = CentroidTracker()
 ct_yolo = CentroidTracker()
@@ -272,7 +295,8 @@ def optical_flow(prev_gray, frame_gray, lk_params, tracks, vis, index, tiempo):
     reg = []
     new_tiempo = []
     for tr, (x, y), good_flag, good_index, gtime in zip(tracks, p1.reshape(-1, 2), good, index, tiempo):
-        if not good_flag or timer()-gtime > 3:
+        #if not good_flag or timer()-gtime > 8:
+        if not good_flag:
             continue
         tr.append((x, y))
         if len(tr) > track_len:
@@ -325,22 +349,22 @@ def optical_flow(prev_gray, frame_gray, lk_params, tracks, vis, index, tiempo):
 
 ###################### Optical Flow #####################################
 
-########## mask #########################
-# Todo borrar 
-def mascara(img,rec):
-    mask = np.zeros(img.shape[:2],np.uint8)
-    bgdmodel = np.zeros((1,65),np.float64)
-    fgdmodel = np.zeros((1,65),np.float64)
-    #ec = (37,58,125,109)
-    cv2.grabCut(img, mask,rec, bgdmodel, fgdmodel, 5 , cv2.GC_INIT_WITH_RECT )
-    mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-    img2 = img*mask2[:,:,np.newaxis]
-    # imgray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-    # ret, thresh = cv2.threshold(imgray, 127, 255, 0)
-    # contorno,b=cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # cv2.drawContours(img2, contorno, -1, (0,255,0), 2)
-    return img2
-############### mask ####################
+# ########## mask #########################
+# # Todo borrar 
+# def mascara(img,rec):
+#     mask = np.zeros(img.shape[:2],np.uint8)
+#     bgdmodel = np.zeros((1,65),np.float64)
+#     fgdmodel = np.zeros((1,65),np.float64)
+#     #ec = (37,58,125,109)
+#     cv2.grabCut(img, mask,rec, bgdmodel, fgdmodel, 5 , cv2.GC_INIT_WITH_RECT )
+#     mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+#     img2 = img*mask2[:,:,np.newaxis]
+#     # imgray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+#     # ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+#     # contorno,b=cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+#     # cv2.drawContours(img2, contorno, -1, (0,255,0), 2)
+#     return img2
+# ############### mask ####################
 
 ###### SOCKETS ############################
 conecto = True
@@ -380,16 +404,21 @@ hilo10 = threading.Thread(name='envia',
 hilo10.start()
 ######FIN SOCKETS###########################
 
-while(ret):
+while(capture.isOpened()):
     inicio = timer()
     time_elapsed = time.time() - prev
     # Capture frame-by-frame
     if time_elapsed > 1./frame_rate:
         ret, frame = capture.read()
 
+        if ret == False:
+            print("termino flujo de video (ret==0). espera 5s")
+            break #TODO sacar en produccion
+            
         input_q.put(frame) # cola de buffer para el retardo
         prev = time.time()
         crop_img = frame[ycr:ycr+hcr, xcr:xcr+wcr]
+
         if frame_idx % detect_interval == 0:
             drk_q.put(crop_img) # alimenta la cola del detector
             sensib_q.put(sens) # Sensibilidad de deteccin o nivel de confianza 
@@ -403,8 +432,13 @@ while(ret):
             draw_str(crop_img, (350, 12), 'Gamma')
 
         frame_gray = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
-        vis = crop_img
+        ## correccion Histograma y CLAHE
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        frame_gray=cv2.equalizeHist(frame_gray)
+        frame_gray = clahe.apply(frame_gray)
+
 ################ Optical Flow ########################################
+        vis = crop_img
         if len(tracks) > 0:
             pass
             vis, tracks,index, tiempo = optical_flow(prev_gray, frame_gray, lk_params, tracks, vis,index, tiempo)
@@ -421,13 +455,13 @@ while(ret):
                 ti_=np.zeros((p.shape[0], 1))
                 for x, y in np.float32(p).reshape(-1, 2):
                     tracks.append([(x, y)])
-                    #index.append(0)
+                    if x > frame_gray.shape[1] or y > frame_gray.shape[0]:
+                        print(x,y,'FALTA'*30)
+                        print('frame_gray.shape',frame_gray.shape)
                 index = np.append(index,id_, axis=0)
                 ti_.fill(timer())
                 tiempo = np.append(tiempo,ti_, axis=0)
 
-        
-        # Our operations on the frame come here
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         backtorgb = cv2.cvtColor(gray,cv2.COLOR_GRAY2RGB)
 
@@ -462,14 +496,14 @@ while(ret):
             centroid_yolo = []
             rects_yolo = []
             i_sort=np.sort(i_sort.view('i8,i8,i8,i8,i8,i8'), order=['f1'], axis=0).view(np.int) # ordena matriz (lejos ->cerca)
-            for e in i_sort:
-                #print(i_sort)
-                xs,ys,a,b = e[0],e[1],e[2],e[3]
-                cv2.rectangle(crop_img, (xs, ys), (a, b) , (255, 0, 255), 1) # TODO recomponer para la pintana
-                xsc, ysc = xs, ys
-                centroid_yolo.append((xsc,ysc))
-                rects_yolo.append(e[0:4].astype("int"))
-            objects_yolo= ct_yolo.update(rects_yolo, centroid_yolo)
+            
+            # for e in i_sort:
+            #     xs,ys,a,b = e[0],e[1],e[2],e[3]
+            #     cv2.rectangle(vis, (xs, ys), (a, b) , (255, 0, 255), 1) # TODO recomponer para la pintana
+            #     xsc, ysc = xs, ys
+            #     centroid_yolo.append((xsc,ysc))
+            #     rects_yolo.append(e[0:4].astype("int"))
+            # objects_yolo= ct_yolo.update(rects_yolo, centroid_yolo)
 
             # Traslape
             lista_sort = []
@@ -509,30 +543,28 @@ while(ret):
                 D = dist.cdist(centros(aa),centros(bb))
                 rows = D.min(axis=1).argsort()
                 cols = D.argmin(axis=1)[rows]
-                #if bb.shape[0]!=aa.shape[0]:
-                #print('shape bb',bb.shape[0],'shape aa',aa.shape[0])
                 for (row, col) in zip(rows, cols):
-                    pass
-                    #print('indice',bb[col][6],'frame',bb[col][7],'indice',aa[row][6],'frame',aa[row][7],'mtrx_id',mtrx_id,D[row,col] )
                     aa[row,6]=bb[col][6]
-                    aa[row,7]=D[row,col]
-                #print('next')
+                    aa[row,7]=D[row,col] # almacena la distancia
 
             puntos = np.int32([tr[-1] for tr in tracks]).reshape(-1,  2)
- 
-            for ti,(px,py) in enumerate(puntos): # actualiza el tiempo de los tracks si es que estan en fg_mask
-                if cv2.resize(fg_mask,crop_img.shape[1::-1])[px,py]: 
-                    tiempo[ti,0]=timer()
-            # for e in i_sort:
-            #     xs,ys,a,b,clas = e[0],e[1],e[2],e[3],e[4]
-            #     roi=mpltPath.Path([(xs-1,ys-1),(xs-1,b+1),(a+1,b+1),(a+1,ys-1)])
+
+            for ti,(py,px) in enumerate(puntos): # actualiza el tiempo de los tracks si es que estan en fg_mask
+                if px <= fg_mask.shape[1] and py <= fg_mask.shape[0]:
+                    if fg_mask[py-1,px-1]: 
+                        tiempo[ti,0]=timer()
+                        #print(ti)
+
             for num,lis in enumerate(lista_sort):
                 roi = mpltPath.Path(lis)
                 lis = np.array(lis,np.int32)
-                cv2.polylines(crop_img,[lis],True,(255, 255, 255), 2)
+                cv2.polylines(crop_img,[lis],True,(255, 255, 255), 1)
+                print('lis',lis)
+                cv2.putText(crop_img, str(num), (lis[0][0],lis[0][1] ),cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1) 
                 contiene = roi.contains_points(puntos)
                 a = index[contiene]
                 b = a[a[:,0]>0]
+                print('num,b',num,b)
                 moda,cont=stats.mode(a)
                 modab,contb=stats.mode(b)
                 #print('modab', type(modab),modab.shape,modab)
@@ -549,7 +581,7 @@ while(ret):
                     if moda == 0:
                         #id0 +=1
                         #moda = id0
-                        if aa[num,7]<10:
+                        if aa[num,7]<10: #si la distancia es menor a 10px
                             #print('indice anterior cuando moda es 0,','indice',aa[num,6],"distancia",aa[num,7], "nuevo id0 ",id0)
                             moda = aa[num,6]
                         else:
@@ -564,7 +596,7 @@ while(ret):
                         else:
                             val = int(index[i][0])
                             if val == m0 and val !=0: #Expulsa a los puntos q no estan en roi
-                                #print("falso",i,val, m0)
+                                print("falso",i,val, m0)
                                 index[i,0]=0
                     mtrx_tmp[num,6]=moda
                     mtrx_tmp[num,7]= mtrx_id
@@ -576,47 +608,32 @@ while(ret):
                     pass
                 #print('contiene',a,moda ) 
                 a = index[contiene]
-                #print('post',a)
-            
+                print('post',a)
+
+            for xd,yd,wd,hd,cla,umb,num_,fr in mtrx_tmp.astype('int'):
+                crop_det = crop_img[yd:hd, xd:wd]
+                file = 'videos/img/'+str(num_)+'f/'+str(fr)+'.jpg'
+                path = 'videos/img/'+str(num_)+'f/'
+                # try: 
+                #     os.mkdir(path) 
+                # except OSError as error:
+                #     print(error)
+                # cv2.imwrite(file,crop_det)
+            #hist_corr(src_base,src_test1)
             mtrx_log = np.append(mtrx_log,mtrx_tmp,axis=0).astype("int")
             #print('mtrx_tmp:',mtrx_log.shape,'\n',mtrx_log )
 
-
-
         else:
             i_sort = np.array([])
-        if objects_yolo !=None:
-            lista_id = []
-            par_cent = []
-            for (objectID_y, centroid_y) in objects_yolo.items():
-                text = "ID {}".format(objectID_y)
-                #cv2.putText(crop_img, text, (centroid_y[0], centroid_y[1]),cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1) 
-                lista_id.append(objectID_y)
-                par_cent.append(centroid_y)
-            par_cent = np.array(par_cent)
-            #print(lista_id,par_cent)
-            if i_sort.shape[0]:
-                xs=i_sort[:,[0,2]].mean(axis=1)
-                ys=i_sort[:,[1,3]].mean(axis=1)
-                xs=xs.reshape(xs.shape[0],1)
-                ys=ys.reshape(ys.shape[0],1)
-                cent_sort=np.append(xs,ys,axis=1).astype(int)
-                D = dist.cdist(par_cent, cent_sort)
-                rows = D.min(axis=1).argsort()
-                cols = D.argmin(axis=1)[rows]
-                for (row, col) in zip(rows, cols):
-                    pass
-                    #print(row,col,'\n', matriz.astype(int))
-
-
 
         if bgshow and b_ground_sub:
             cv2.imshow(winbGround,fg_mask)
 
-        src2 = cv2.resize(fg_mask,crop_img.shape[1::-1])
-        src2 = cv2.cvtColor(src2,cv2.COLOR_GRAY2RGB)
-        dst = cv2.bitwise_and(src2,crop_img)
-        cv2.imshow("mask",dst)
+        # mascara que mezcla bg substration con la imagen
+        # src2 = cv2.resize(fg_mask,crop_img.shape[1::-1])
+        # src2 = cv2.cvtColor(src2,cv2.COLOR_GRAY2RGB)
+        # dst = cv2.bitwise_and(src2,crop_img)
+        # cv2.imshow("mask",dst)
 
         ch = cv2.waitKey(1)
         if ch & 0xFF == ord('q'):
@@ -650,6 +667,8 @@ while(ret):
         draw_str(resized, (10, 90), "timer: "+str("{:.4f}".format(timer()-inicio)))
         draw_str(resized, (10, 110), "id0: "+str("{:d}".format(id0)))
         draw_str(resized, (10, 130), "fr detec: "+str("{:d}".format(detect_interval)))
+        draw_str(resized, (10, 150), "fr gray: "+str(frame_gray.shape)) 
+        draw_str(resized, (10, 170), "fr frame: "+str(frame.shape)) 
         cv2.imshow('Streetflow.cl',resized)
 
 

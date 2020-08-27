@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Camara, Alarmas
+from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables
 from django.utils.safestring import mark_safe
 import base64
 # Register your models here.
@@ -12,16 +12,37 @@ admin.site.site_header = "Seguridad - HRGestión"
 admin.site.index_title = "Menú"
 admin.site.site_url = '/'
 
+class AlarmasInline(admin.TabularInline):
+    model = Alarmas
+    extra = 0
+    list_display = ['camara','tiempo','clase','cantidad', 'video']
+    readonly_fields = ('camara','tiempo','clase','cantidad', 'video','recibido',)
+
+class RegAccInline(admin.TabularInline):
+    model = RegAcciones
+    extra = 0
+    list_display = ['tiempo','accion','evento',]
+    readonly_fields = ('tiempo','accion','evento',)
+
+@admin.register(Eventos)
+class EventosAdmin(admin.ModelAdmin):
+    list_display = ['t_ini','t_fin','responsable','activo'] 
+    inlines = [ RegAccInline,AlarmasInline, ]
 
 @admin.register(Alarmas)
 class AlarmasAdmin(admin.ModelAdmin):
     list_display = ['camara','tiempo','clase','cantidad', 'video'] 
 
+@admin.register(Responsables)
+class ResponsAdmin(admin.ModelAdmin):
+    list_display = ['nombre','estado','fono','mail','nivel', 'tipo', 'endpoint',] 
+
 @admin.register(Camara)
 class CamarasAdmin(admin.ModelAdmin):
     change_form_template = "admin/camaras/cam_form.html"
     list_display = ['nombre','estado','sensib','fuente'] 
-    readonly_fields = ('actualizado', 'imagen' )
+    readonly_fields = ('actualizado', 'imagen', 'secreto' )
+
 
     def imagen(self, obj):
         #return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
@@ -34,7 +55,7 @@ class CamarasAdmin(admin.ModelAdmin):
     fieldsets = (
                 ('Camaras', {
                             #'fields': ('autor','estado','operador',( 'tipo','clasifi', 'urgencia'),
-                            'fields': ('nombre','estado','sensib','fuente','actualizado','imagen'
+                            'fields': ('nombre','secreto','estado','sensib','fuente','actualizado','url_alarm','imagen'
                                         )}),
                 )
 

@@ -14,6 +14,8 @@ class Drk:
 		self.weightPath = "net.wei"
 		#self.configPath = "yolo4/yolov4.cfg" # yolo4
 		#self.weightPath = "yolo4/yolov4.weights" # yolo4
+		self.configPath = "608/yolov3.cfg" # yolo3 608
+		self.weightPath = "608/yolov3.weights" # yolo3 608
 		self.metaPath = "cat.dat"
 		if self.netMain is None:
 			self.netMain = pnet.load_net_custom(self.configPath.encode(

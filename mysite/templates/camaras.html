@@ -141,7 +141,7 @@ $(function () {
         });
 
         $("#guardar").click(function () {
-            console.log('polyLines',polyLines)
+            console.log('polyLines',polyLines);
             puntos = JSON.stringify(polyLines);
             $("#id_areas").val( puntos);
             $.each(polyLines, function(i, item) {

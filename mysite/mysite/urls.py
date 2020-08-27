@@ -24,6 +24,7 @@ from django.conf import settings
 urlpatterns = [
     #path('accounts/', include('accounts.urls')), # new
     path('accounts/', include('django.contrib.auth.urls')),
+    path('', include('camaras.urls')),
     path('accounts/login/', auth_views.LoginView.as_view()),
     path('change-password/', auth_views.PasswordChangeView.as_view()),
     path('admin/', admin.site.urls),
