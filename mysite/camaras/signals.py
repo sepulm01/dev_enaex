@@ -71,6 +71,7 @@ def escalamiento():
             print('pasa x eve.proced 1')
             if eve.t_ini + datetime.timedelta(minutes=60) < now():
                 eve.activo = False
+                eve.proced = False
                 eve.t_fin = now()
                 eve.save()
                 reg=RegAcciones(
@@ -97,7 +98,7 @@ def envia_mail(to_email,mail_subject,message,evento):
     email.attach_alternative(message, 'text/html')
     try:
         email.send()
-        reg=RegAcciones(evento=evento,accion="mail enviado a:"+to_email+"\n"+message)
+        reg=RegAcciones(evento=evento,accion="mail enviado a:"+to_email+", "+message)
         reg.save()
     except Exception as e:
         print("Parece que hay un error en envia_mail:",e)
@@ -118,7 +119,7 @@ def wapp(num, txt ,evento):
                   to='+'+para
                                   )
         print(message.sid)
-        reg=RegAcciones(evento=evento,accion="SMS enviado a:"+num+"\n"+txt+",\n SID: "+message.sid)
+        reg=RegAcciones(evento=evento,accion="SMS enviado a:"+num+", texto: "+txt+", SID:"+message.sid)
         reg.save()
     except Exception as e:
         print("Parece que hay un error en wapp:",e)

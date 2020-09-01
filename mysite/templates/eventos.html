@@ -1,0 +1,170 @@
+<!-- templates/home.html-->
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<style type="text/css">
+h2,h2,h3 {
+    color: white;
+    background-color:#447e9b;
+}
+</style>
+{% load crispy_forms_tags %}
+
+{% if user.is_authenticated %}
+<div class="container">
+<p></p>
+<h2>Evento</h2>
+ 
+<div class="container">
+  <div class="row">
+    <div class="col-sm">
+      <b>Estado</b>
+  <!-- Botón de estado y comunicación app movil -->
+        <div>
+            <button type="button" value="{{val_btn}}"  class="{{clase}}" id="btnestado">{{mensaje}}</button>
+        </div>
+    </div>
+    <div class="col-sm">
+      <b>Inicio alarma</b >
+        <p>{{ inicio }}</p>
+    </div>
+    <div class="col-sm">
+        <b>Fin alarma</b>
+      <P>{{ fin }}</P>
+    </div>
+  </div>
+</div>
+<div class="container">
+  <div class="row">
+    <div class="col-sm">
+        <p></p>
+      <b>Nivel de escalamiento</b>
+      <p><b>{{escala}}</b></p>
+    </div>
+    <div class="col-sm">
+
+    </div>
+    <div class="col-sm">
+
+    </div>
+  </div>
+</div>
+
+<div id="sec_form" style="display: none">
+    <h3>Ingreso de comentarios</h3>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <p></p>
+        <input type="submit" class="btn btn-primary" value="Guardar">
+    </form>
+</div>
+</div>
+<p></p>
+<div class="container">
+  <h3 >Acciones efectuadas</h3>
+  {{acciones|safe}}
+</div>
+<div class="container">
+  <h3>Registro de alarmas gatilladas</h3>
+  {{alarmas|safe}}
+</div>
+{% endif %}
+
+<script type="text/javascript">
+
+    var btnestado = document.getElementById("btnestado");
+    // 
+     btnestado.addEventListener("click", feedback );
+     btnestado.addEventListener("mouseover", helptext);
+     if(btnestado.value>1){
+        document.getElementById("sec_form").style.display = 'block';
+     }
+
+    var resp = "{{ user.first_name }}"+ " {{ user.last_name}}";
+    document.getElementById("id_responsable").value = resp
+    btnestado.addEventListener("mouseout", ratonfuera);
+
+    //var proced = document.getElementById("id_proced");
+    //var activo = document.getElementById("id_activo");
+
+    function helptext(){
+        if (btnestado.value==1){
+            var phtoast = $.toast({
+            heading: 'Info',
+            text: 'Presione para cerrar',
+            position: 'top-left',
+            //hideAfter: true,
+            timeRemaining: 1000,
+            icon: 'info',
+            bgColor: 'blue',
+            textColor: 'white',
+            stack: false
+            });
+        }
+    }
+
+    function ratonfuera(){
+        $.toast().reset('all');
+    }
+
+    function feedback(){
+        console.log("boton apretado")
+
+        if(btnestado.value==1){
+            if (confirm("¿Esta seguro de finalizar el procedimiento?")) {
+                txt = "OK!";
+                btnestado.innerHTML = "Finalizado" ;
+                btnestado.setAttribute("class", "btn btn-secondary btn-lg btn-block" ) 
+                //proced.checked = false;
+                //activo.checked = false;
+                document.getElementById("sec_form").style.display = 'block'; 
+
+                btnestado.setAttribute("value", 2 );
+                updEnvio(2 );
+
+
+                } else {
+                  txt = "Cancelar!";
+                }
+
+            }
+
+            if(btnestado.value==0){
+                btnestado.innerHTML = "En procedimiento" ;
+                btnestado.setAttribute("class", "btn btn-warning btn-lg btn-block" ) 
+                //proced.checked = true;
+                //document.getElementById("id_grabar").style.display = 'block';
+                btnestado.setAttribute("value", 1 );
+                updEnvio(1 );
+            }
+
+
+    }
+
+    function updEnvio(estado){
+        $.ajax({
+              url: '/ajax/upd_envio/',
+              data: {
+                    estado: estado,
+                    eve_id: {{eve_id}}
+                    },
+              dataType: 'json',
+              success: function (data) {
+                console.log( data.estado);
+                //btnestado.setAttribute("value", data.estado );
+
+              }
+          });
+      }
+
+</script>
+
+{% endblock %}
+
+
+{% block jquery %}
+
+{% endblock %}

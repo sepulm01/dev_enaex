@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <p></p>
+<h4>Volver a ingresar</h4>
+</div>
+
+<script type="text/javascript">
+    window.location.replace("{% url 'login' %}");
+</script>
+{% endblock %}

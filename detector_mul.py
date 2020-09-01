@@ -227,6 +227,7 @@ class App:
                         return False
 
         #################### settings #######################
+
         area_mask = True # variable de mascara para la detección
         actualizar = datetime.now(tz) # Variable de update de estado de camara y envio de foto a base y website
         alarma = False
@@ -263,6 +264,7 @@ class App:
         turno=en_turno(ini,fin)
         print('Turno:',turno)
         mapa, dibujo=mapa_areas_bd(disp[0][7])
+        
         con = np.zeros((1,len(dibujo)+1)) # Matriz de congestion
         con[0][0]=1 # Variable de congestion
         

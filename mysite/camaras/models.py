@@ -19,9 +19,9 @@ class Camara(models.Model):
     class Meta:
         verbose_name_plural = "Cámaras"
 
-    def save(self, *args, **kwargs):
-        self.secreto = uuid.uuid4().hex
-        super(Camara, self).save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.secreto = uuid.uuid4().hex
+    #     super(Camara, self).save(*args, **kwargs)
 
     def __str__(self):
         return str(self.nombre)
@@ -49,7 +49,8 @@ class Eventos(models.Model):
     activo = models.BooleanField('Alarma activa',default=True)
     proced = models.BooleanField('En prodedimiento',default=False)
     estado = models.IntegerField('Nivel escalamiento',default=0)
-    responsable = models.ForeignKey(User,blank=True, null=True,on_delete=models.PROTECT)
+    #responsable = models.ForeignKey(User,blank=True, null=True,on_delete=models.PROTECT)
+    responsable = models.TextField('Responsable',blank=True, null=True)
     comentarios = models.TextField('Comentarios',blank=True, null=True)
 
     class Meta:
@@ -89,3 +90,11 @@ class Responsables(models.Model):
 
     class Meta:
         verbose_name_plural = "Responsables"
+
+class Ajustes(models.Model):
+    """docstring for ClassName"""
+    uso_disco = models.IntegerField('Uso disco video' ,default=90)
+
+    class Meta:
+        verbose_name_plural = "Ajustes"
+        

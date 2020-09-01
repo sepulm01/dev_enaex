@@ -1,6 +1,6 @@
 from django import forms 
 from . import models
-from django.forms import ValidationError, Textarea, TextInput
+from django.forms import ValidationError, Textarea, TextInput, CheckboxInput, Select, DateTimeInput
 import datetime
 import re
 from django.core.exceptions import ValidationError
@@ -15,15 +15,15 @@ class CamarasForm(forms.ModelForm):
      '''
     class Meta:
         fields = (
-    'nombre',
-    'estado',
-    'sensib',
-    'fuente',
-    'actualizado',
-    'areas',
-    'op_ini',
-    'op_fin',
-        )
+            'nombre',
+            'estado',
+            'sensib',
+            'fuente',
+            'actualizado',
+            'areas',
+            'op_ini',
+            'op_fin',
+            )
         model = models.Camara
 
         widgets = {
@@ -37,3 +37,23 @@ class CamarasForm(forms.ModelForm):
             'actualizado': TextInput(attrs={'class':'form-control', 'readOnly':'true'}),
             }
         
+class EventosForm(forms.ModelForm):
+    class Meta:
+        fields = (
+              ##'activo', 'proced',
+               'responsable', 'comentarios',
+            )
+        model = models.Eventos
+
+        widgets = {
+
+            #'activo':CheckboxInput(),
+            #'proced':CheckboxInput(attrs={'style':"display:none"}),
+            #'proced':CheckboxInput(),
+            'responsable':TextInput(attrs={'class':'form-control'}),
+            'comentarios':Textarea(attrs={'class':'form-control',
+                                            'placeholder':'Ingrese aquí comentarios sobre la alarma gatillada si corresponde.',
+                                            'rows':"4"}),
+        }
+
+

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables
+from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables, RegAcciones
 from django.utils.safestring import mark_safe
 import base64
 # Register your models here.
@@ -21,6 +21,11 @@ class AlarmasInline(admin.TabularInline):
 class RegAccInline(admin.TabularInline):
     model = RegAcciones
     extra = 0
+    list_display = ['tiempo','accion','evento',]
+    readonly_fields = ('tiempo','accion','evento',)
+
+@admin.register(RegAcciones)
+class RegAcciones(admin.ModelAdmin):
     list_display = ['tiempo','accion','evento',]
     readonly_fields = ('tiempo','accion','evento',)
 
