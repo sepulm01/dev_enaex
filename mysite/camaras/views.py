@@ -25,7 +25,7 @@ from django.utils.timezone import make_aware , now
 from django.forms.models import model_to_dict
 
 SCL = pytz.timezone(settings.TIME_ZONE)
-path = '/home/martin/Documents/dev_enaex/mysite/media/alarmas/'
+path = '/var/www/mysite/media/alarmas/'
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':
@@ -301,16 +301,20 @@ def eventos(request, id):
     escala = 0
     instance = get_object_or_404(Eventos, pk=id)
     reg = RegAcciones.objects.filter(evento=instance).order_by('-tiempo')
-    df1 = pd.DataFrame(reg.values('tiempo','accion'))
-    df1["tiempo"] = pd.DatetimeIndex(df1["tiempo"]).tz_convert('America/Santiago').strftime('%d/%m/%Y %H:%M')
-    acciones_tbl = df1.to_html(
-            #columns=['Fecha hora inicio','Fecha hora cierre','Alarma activa','En prodedimiento','Nivel escalamiento'],
-            classes=["table table-striped "],
-            border=0 , justify='center',
-            table_id="tabla_ala",
-            index=False,
-            escape=False,
-            render_links=True)
+    if len(reg):
+        df1 = pd.DataFrame(reg.values('tiempo','accion'))
+        df1["tiempo"] = pd.DatetimeIndex(df1["tiempo"]).tz_convert('America/Santiago').strftime('%d/%m/%Y %H:%M')
+        acciones_tbl = df1.to_html(
+                #columns=['Fecha hora inicio','Fecha hora cierre','Alarma activa','En prodedimiento','Nivel escalamiento'],
+                classes=["table table-striped "],
+                border=0 , justify='center',
+                table_id="tabla_ala",
+                index=False,
+                escape=False,
+                render_links=True)
+    else:
+        acciones_tbl = '<p>No hay acciones tomadas, verifique que existan responsables asignados\
+         a cada nivel de escalamiento para su aviso.<p>'
     ala = Alarmas.objects.filter(evento=instance).order_by('-tiempo')
     df2 = pd.DataFrame(ala.values('tiempo','camara','clase','cantidad','video','pk'))
     df2["video"] = df2["pk"].apply(lambda x: '<a href="/video/{0}">{1}</a>'.format(x,df2[df2['pk']==x].video.values[0]))
