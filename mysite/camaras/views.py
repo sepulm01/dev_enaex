@@ -25,7 +25,8 @@ from django.utils.timezone import make_aware , now
 from django.forms.models import model_to_dict
 
 SCL = pytz.timezone(settings.TIME_ZONE)
-path = '/var/www/mysite/media/alarmas/'
+path = 'media/alarmas/'
+#path = '/var/www/mysite/media/alarmas/'
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':
@@ -152,16 +153,45 @@ def video(request, id):
         os.remove(output)
     except:
         pass
-    ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
-    ff.run()
+    if os.path.isfile(file):
+        ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
+        ff.run()
+        error_msg = ''
+    else:
+        error_msg = 'archivo %s no encontrado' %(file)
     video = '/media/alarmas/output.mp4'
     content = {
     'video':video,
      'id':alarma.id,
      'tiempo':alarma.tiempo,
      'camara':alarma.camara,
+     'error_msg':error_msg,
      }
     return render(request, 'video.html', content)
+
+@csrf_exempt
+def cam_down(request):
+    ''' vista que recibe las alarmas desde los workers o dockers (detector_multy)'''
+    if request.method == 'POST':
+        camara = request.POST['camara']
+        fuente = request.POST['fuente']
+        error_msg = request.POST['error_msg']
+        secreto  = request.POST['secreto']
+        if camara is not None:
+            cam=Camara.objects.get(nombre=camara)
+            if secreto == cam.secreto:
+                txt = 'nodo %s sin señal de video de %s' % (camara,fuente)
+                print(txt)
+                cam.estado = False
+                cam.error_msg = error_msg
+                cam.save()
+            else:
+                print('Erro de validación en cam',cam.nombre)
+
+    data = {
+          "data": "data",
+        }
+    return JsonResponse(data, safe=False)
 
 @csrf_exempt
 def alarma_post(request):
@@ -209,6 +239,7 @@ def camviva_post(request):
                 cam.actualizado = tiempo
                 cam.image =  image
                 cam.estado = True
+                cam.error_msg = ''
                 cam.save()
             else:
                 print('Erro de validación en camviva_post, cámara:',cam.nombre)
@@ -235,7 +266,15 @@ def cam_disp(request,id):
                   'op_ini': cam.op_ini,
                   'op_fin': cam.op_fin,
                   'secreto': cam.secreto,
-                  'url_alarm': cam.url_alarm
+                  #'url_alarm': cam.url_alarm,
+                  'detect_todo': cam.detect_todo,
+                  'micw': cam.min_contour_width,
+                  'mich': cam.min_contour_height,
+                  'macw': cam.max_contour_width,
+                  'mach': cam.max_contour_height,
+                  'dist_bg': cam.dist_bg,
+                  'rep_alar_ni': cam.rep_alar_ni,
+
                 }
 
     return JsonResponse(data, safe=False)

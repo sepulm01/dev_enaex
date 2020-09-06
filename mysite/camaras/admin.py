@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables, RegAcciones
 from django.utils.safestring import mark_safe
 import base64
+from .views import path, borra_video_zombi
 # Register your models here.
 
 #admin.site.register(Camara)
@@ -11,6 +12,20 @@ import base64
 admin.site.site_header = "Seguridad - HRGestión"
 admin.site.index_title = "Menú"
 admin.site.site_url = '/'
+admin.site.disable_action('delete_selected')
+
+def borra_alarmas(modeladmin, request, queryset):
+    #print(queryset)
+    for i in queryset.values('video'):
+        print(i['video'], path)
+        try:
+            os.remove(path + i['video'])
+        except:
+            print("error borrando",i['video'])
+            pass
+    queryset.delete()
+    borra_video_zombi()
+borra_alarmas.short_description = "Borra alarmas y arch."
 
 class AlarmasInline(admin.TabularInline):
     model = Alarmas
@@ -33,10 +48,12 @@ class RegAcciones(admin.ModelAdmin):
 class EventosAdmin(admin.ModelAdmin):
     list_display = ['t_ini','t_fin','responsable','activo'] 
     inlines = [ RegAccInline,AlarmasInline, ]
+    actions = ['delete_selected']
 
 @admin.register(Alarmas)
 class AlarmasAdmin(admin.ModelAdmin):
     list_display = ['camara','tiempo','clase','cantidad', 'video'] 
+    actions = [borra_alarmas]
 
 @admin.register(Responsables)
 class ResponsAdmin(admin.ModelAdmin):
@@ -45,8 +62,8 @@ class ResponsAdmin(admin.ModelAdmin):
 @admin.register(Camara)
 class CamarasAdmin(admin.ModelAdmin):
     change_form_template = "admin/camaras/cam_form.html"
-    list_display = ['nombre','estado','sensib','fuente'] 
-    readonly_fields = ('actualizado', 'imagen', 'secreto' )
+    list_display = ['nombre','estado','sensib','fuente','detect_todo','op_ini','op_fin'] 
+    readonly_fields = ('actualizado', 'imagen', 'secreto', 'error_msg', 'estado' )
 
 
     def imagen(self, obj):
@@ -60,8 +77,29 @@ class CamarasAdmin(admin.ModelAdmin):
     fieldsets = (
                 ('Camaras', {
                             #'fields': ('autor','estado','operador',( 'tipo','clasifi', 'urgencia'),
-                            'fields': ('nombre','secreto','estado','sensib','fuente','actualizado','url_alarm','imagen'
+                            'fields': (
+                                'nombre',
+                                ('estado','error_msg'),
+                                'detect_todo',
+                                'sensib',
+                                'fuente',
+                                'actualizado',
+                                #'url_alarm',
+                                'op_ini',
+                                'op_fin',
+                                'imagen',
+                                #'secreto',
+
                                         )}),
+                ('Background Sub',{
+                    'classes':('collapse', 'open'),
+                    'fields': ( 'min_contour_width',
+                                'min_contour_height',
+                                'max_contour_width',
+                                'max_contour_height',
+                                'dist_bg',
+                                'rep_alar_ni',)
+                    }),
                 )
 
 

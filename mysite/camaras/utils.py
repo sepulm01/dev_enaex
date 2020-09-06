@@ -1,7 +1,11 @@
 import psutil
 from django.contrib.auth.models import User, Group
+from .models import *
 from django.core.mail import EmailMessage, EmailMultiAlternatives
 from .models import Ajustes
+import datetime
+from django.utils.timezone import make_aware , now
+import time
 
 def seguimiento():
     pass
@@ -42,3 +46,14 @@ def envia_mail(to_email,mail_subject,message):
         email.send()
     except Exception as e:
         print("Parece que hay un error en envia_mail:",e)
+
+def check_cam():
+    camaras = Camara.objects.all().order_by('id')
+    for cam in camaras:
+        #print (cam.nombre, cam.estado)
+        if cam.actualizado < now()-datetime.timedelta(minutes=2):
+            cam.estado= False
+            diferencia = now() - cam.actualizado
+            cam.error_msg = 'Sin actualización de nodo desde s%' % (diferencia)
+            cam.save()
+            print ('Cambio en',cam.nombre, cam.estado, cam.error_msg)

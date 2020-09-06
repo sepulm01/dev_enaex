@@ -6,15 +6,23 @@ import uuid
 class Camara(models.Model):
     nombre = models.CharField(max_length=10)
     estado = models.BooleanField(default=False)
-    sensib = models.IntegerField()
+    sensib = models.IntegerField('Sensibilidad det')
     fuente = models.CharField(max_length=300)
     image = models.BinaryField(blank=True)
     actualizado = models.DateTimeField('Actualizado',blank=True, null=True,auto_now_add=False)
     areas = models.TextField('Areas',blank=True, null=True)
-    op_ini = models.TimeField('Inicio',blank=True, null=True,auto_now_add=False)
-    op_fin = models.TimeField('Fin',blank=True, null=True,auto_now_add=False)
+    op_ini = models.TimeField('Inicio turno',blank=True, null=True,auto_now_add=False, editable=True)
+    op_fin = models.TimeField('Fin turno',blank=True, null=True,auto_now_add=False, editable=True)
     secreto = models.CharField(max_length=50, default=uuid.uuid4().hex, null=False, blank=False, editable=False, unique=False)
-    url_alarm = models.CharField(max_length=300,)
+    #url_alarm = models.CharField(max_length=300,)
+    detect_todo = models.BooleanField('Detecta toda la pantalla',default=False)
+    min_contour_width=models.IntegerField('min_contour_width', default=20,null=False, blank=False)
+    min_contour_height=models.IntegerField('min_contour_height', default=20,null=False, blank=False)
+    max_contour_width=models.IntegerField('max_contour_width', default=590,null=False, blank=False)
+    max_contour_height=models.IntegerField('max_contour_height', default=590,null=False, blank=False)
+    dist_bg = models.IntegerField('Distancia recorrida px', default=290)
+    rep_alar_ni = models.IntegerField('Rep alarm en fr', default=20)
+    error_msg = models.CharField('Msg error',blank=True, null=True,max_length=300)
 
     class Meta:
         verbose_name_plural = "Cámaras"
