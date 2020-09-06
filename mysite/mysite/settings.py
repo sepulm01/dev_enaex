@@ -147,7 +147,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = 'mail.hrgestion.cl'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'no_contestar@hrgestion.cl'
-EMAIL_HOST_PASSWORD = 'x5922papahrgestion'
+EMAIL_HOST_PASSWORD = ''
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
