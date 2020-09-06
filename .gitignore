@@ -1,0 +1,14 @@
+enaex/
+mnt/
+mysite/media/
+mysite/camaras/migrations/
+mysite/camaras/__pycache__/
+mysite/static/alarma/
+mysite/mysite/__pycache__/
+sql/__pycache__/
+videos/
+gpu/__pycache__/
+color/
+*.ipynb
+__pycache__/
+*.log
