@@ -1,9 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
-
+<!--Import materialize.css-->
+      <link type="text/css" rel="stylesheet" href="/static/css/materialize.min.css"  media="screen,projection"/>
 <div class="container">
 	<p></p>
 {{tabla|safe}}
 </div>
+      <!--JavaScript at end of body for optimized loading-->
+      <script type="text/javascript" src="/static/js/materialize.min.js"></script>
 
+<script type="text/javascript">
+    function updateTime(){window.location.reload(true);
+        console.log('paso x aqui')
+    }
+
+
+setInterval(updateTime, 10000);
+</script>
 {% endblock %}

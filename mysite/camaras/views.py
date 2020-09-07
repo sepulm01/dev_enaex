@@ -61,9 +61,18 @@ def camara(request,id):
 
 @login_required
 def lista_camaras(request):
+    icono_true = '<a class="btn-floating green"><i class="material-icons">check_circle</i></a>'
+    icono_false = '<a class="btn-floating pulse red"><i class="material-icons">close</i></a>'
     camaras = Camara.objects.all().order_by('id')
     df = pd.DataFrame(camaras.values('id','nombre',  'estado', 'sensib', 'fuente' ))
+    df["estado"] = df["estado"].apply(lambda x: icono_true if x else icono_false)
     df["id"] = df["id"].apply(lambda x: '<a href="/camara/{0}">{0}</a>'.format(x))
+    df.rename(columns={
+        'nombre':'Nombre',
+        'estado': 'Estado',
+        'sensib': 'Sensibilidad',
+        'fuente':'Fuente de video',
+        }, inplace=True)
     html = df.to_html(index=False,
         escape=False,
         render_links=True,
