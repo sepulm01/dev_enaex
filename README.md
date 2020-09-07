@@ -40,8 +40,9 @@ sudo mount -a
 Habilitar archivo conf.file en el mismo direcorio de dector_mul_rq.py
 contenido tipo json:
 
-    {
- "website": "http://127.0.0.1:8000"
+{
+ "website": "http://127.0.0.1:8000",
+ "output_dir": "mysite/media/alarmas/"
 }
 
 

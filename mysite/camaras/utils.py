@@ -54,6 +54,6 @@ def check_cam():
         if cam.actualizado < now()-datetime.timedelta(minutes=2):
             cam.estado= False
             diferencia = now() - cam.actualizado
-            cam.error_msg = 'Sin actualización de nodo desde s%' % (diferencia)
+            cam.error_msg = 'Sin actualización de nodo desde {}'.format(diferencia)
             cam.save()
-            print ('Cambio en',cam.nombre, cam.estado, cam.error_msg)
+            #print ('Cambio en',cam.nombre, cam.estado, cam.error_msg)

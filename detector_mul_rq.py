@@ -323,6 +323,7 @@ class App:
         with open('conf.file') as json_file:
             datafile = json.load(json_file)
         urlweb=str(datafile['website'])
+        output_dir=str(datafile['output_dir'])
         urlcamviva =urlweb+'/api/camviva/'
         url_get=urlweb+'/api/cam_disp/'+ str(cam_worker) +'/?a=2485987abr'
         url_alarm=urlweb+'/api/alarma/'
@@ -368,7 +369,8 @@ class App:
                         }
             envia_rq(urlcamdown,camdonw_info)
             logger.warning("cap.read(): No hay imagen desde la fuente %s" %(fuente))
-            #exit()
+            time.sleep(5)
+            exit()
             while _ret == False:
                 time.sleep(5)
                 cap = cv.VideoCapture(fuente)
@@ -379,9 +381,8 @@ class App:
         fps = cap.get(cv.CAP_PROP_FPS)
         frame_rate = fps
         prev = 0
-
         id0 = 0
-        output_dir = 'mnt/alarmas/alarmas/' # Docker dentro de /lab
+        #output_dir = 'mnt/alarmas/alarmas/' # Docker dentro de /lab
         #output_dir = 'mysite/media/alarmas/'
         if os.path.isdir(output_dir)==False:
             print('ERROR: Directorio destino de los videos, no existe:',output_dir)
