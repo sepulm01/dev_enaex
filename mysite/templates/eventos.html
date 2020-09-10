@@ -117,7 +117,7 @@ h2,h2,h3 {
             if (confirm("¿Esta seguro de finalizar el procedimiento?")) {
                 txt = "OK!";
                 btnestado.innerHTML = "Finalizado" ;
-                btnestado.setAttribute("class", "btn btn-secondary btn-lg btn-block" ) 
+                btnestado.setAttribute("class", "btn btn-secondary btn-lg btn-block grey" ) 
                 //proced.checked = false;
                 //activo.checked = false;
                 document.getElementById("sec_form").style.display = 'block'; 
@@ -134,7 +134,7 @@ h2,h2,h3 {
 
             if(btnestado.value==0){
                 btnestado.innerHTML = "En procedimiento" ;
-                btnestado.setAttribute("class", "btn btn-warning btn-lg btn-block" ) 
+                btnestado.setAttribute("class", "btn btn-warning btn-lg btn-block yellow" ) 
                 //proced.checked = true;
                 //document.getElementById("id_grabar").style.display = 'block';
                 btnestado.setAttribute("value", 1 );

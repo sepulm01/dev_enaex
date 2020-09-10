@@ -21,7 +21,7 @@ Cliente:
   sudo apt install nfs-common
   sudo mkdir -p /mnt/cloudstation/
   sudo mount 192.168.1.51:/var/www/mysite/media /mnt/cloudstation/
-  sudo mount 192.168.1.51:/var/www/mysite/media mnt/alarmas/
+  sudo mount 192.168.1.53:/var/www/mysite/media mnt/alarmas/
 
 si sale ok entonces editar el /etc/fstab
 nano /etc/fstab
@@ -34,6 +34,13 @@ luego desmontar y montar con con:
 sudo umount /mnt/cloudstation/
 sudo mount -a
 
+En el server 
+sudo mount -o bind /var/www/mysite/media/alarmas /home/sepulm01/dev_enaex/mnt/alarmas
+
+en el fstab:
+sudo nano /etc/fstab
+/var/www/mysite/media/alarmas /home/sepulm01/dev_enaex/mnt/alarmas auto bind 0 0
+sudo mount -a
 
 # Configuración detector mul rq:
 
@@ -45,4 +52,24 @@ contenido tipo json:
  "output_dir": "mysite/media/alarmas/"
 }
 
+# Visualizar videos
 
+en el servidor web instalar ffmpeg
+
+sudo apt-get ffmpeg
+
+
+# Nvidia
+
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt install ubuntu-drivers-common
+ubuntu-drivers devices
+
+== /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 ==
+modalias : pci:v000010DEd00002187sv00001043sd00008769bc03sc00i00
+vendor   : NVIDIA Corporation
+driver   : nvidia-driver-440-server - distro non-free
+driver   : nvidia-driver-450 - third-party free recommended
+driver   : xserver-xorg-video-nouveau - distro free builtin
+
+sudo apt install nvidia-driver-440-server

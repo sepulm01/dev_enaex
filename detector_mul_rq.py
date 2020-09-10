@@ -252,6 +252,7 @@ class App:
             hora = datetime.now(tz).strftime("%H:%M:%S")
             vidfile=str(nombre_cam)+'_'+str(fecha)+'_'+str(hora)+'_'+str(id0)+'.avi'
             v_path = output_dir+vidfile
+            logger.info("pipeline: path video %s" %(v_path))
             dim_y_, dim_x_, _ = frame.shape
             vid_writer = cv.VideoWriter(v_path,fourcc, 20.0, (dim_x_,dim_y_))
             alarma = True

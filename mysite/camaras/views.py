@@ -163,9 +163,13 @@ def video(request, id):
     except:
         pass
     if os.path.isfile(file):
-        ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
-        ff.run()
-        error_msg = ''
+        
+        try:
+            ff = ffmpy.FFmpeg( inputs={file: None}, outputs={output: None} )
+            ff.run()
+        except:
+            pass
+            error_msg = 'error convirtiendo ffmpeg'
     else:
         error_msg = 'archivo %s no encontrado' %(file)
     video = '/media/alarmas/output.mp4'
@@ -388,9 +392,9 @@ def eventos(request, id):
         form = EventosForm(instance=instance)
 
     cla = {
-    0:'btn btn-danger btn-lg btn-block',
-    1:'btn btn-warning btn-lg btn-block',
-    2:'btn btn-secondary btn-lg btn-block' ,
+    0:'btn btn-danger btn-lg btn-block red',
+    1:'btn btn-warning btn-lg btn-block yellow',
+    2:'btn btn-secondary btn-lg btn-block grey' ,
     }
 
     msg = {
