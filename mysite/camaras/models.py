@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User, Group
 import uuid
+from django import forms
 
 # Create your models here.
 class Camara(models.Model):
@@ -23,6 +24,16 @@ class Camara(models.Model):
     dist_bg = models.IntegerField('Distancia recorrida px', default=290)
     rep_alar_ni = models.IntegerField('Rep alarm en fr', default=20)
     error_msg = models.CharField('Msg error',blank=True, null=True,max_length=300)
+    #Parametros vivotek
+    cam_model = models.CharField('Modelo',blank=True, null=True,max_length=30)
+    host=models.CharField('cam host',blank=True, null=True,max_length=15, default='0.0.0.0')
+    port=models.IntegerField('cam port', default=443)
+    usr=models.CharField('cam usr',blank=True, null=True,max_length=25, default='worker_st')
+    pwd=models.CharField('cam pwd',blank=True, null=True,max_length=35)
+    digest_auth=models.BooleanField('cam digest_auth',default=True)
+    ssl=models.BooleanField('cam ssl',default=False)
+    verify_ssl=models.BooleanField('cam verify_ssl',default=False)
+    sec_lvl=models.CharField('cam sec_lvl',blank=True, null=True,max_length=25, default='operator')
 
     class Meta:
         verbose_name_plural = "Cámaras"

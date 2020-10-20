@@ -17,7 +17,7 @@ def espacio_d():
     usado = to_gb(disk_usage.used)
     porcentaje= disk_usage.percent
 
-    if porcentaje > 900:
+    if porcentaje > 90:
         print("Espacio total: {:.2f} GB.".format(total))
         print("Espacio libre: {:.2f} GB.".format(libre))
         print("Espacio usado: {:.2f} GB.".format(usado))

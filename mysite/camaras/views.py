@@ -23,6 +23,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import make_aware , now
 from django.forms.models import model_to_dict
+from .vivotek import VivotekCamera
 
 SCL = pytz.timezone(settings.TIME_ZONE)
 path = 'media/alarmas/'
@@ -155,9 +156,9 @@ def borra_video_zombi():
 
 def video(request, id):
     alarma = Alarmas.objects.get(pk=id)
-
     file = path + alarma.video
     output = path + 'output.mp4'
+    error_msg = ''
     try:
         os.remove(output)
     except:
@@ -227,6 +228,15 @@ def alarma_post(request):
                                 cantidad=cantidad,
                                 video=video)
                 nueva_alarma.save()
+                vivocam = VivotekCamera(host=cam.host,
+                         port=cam.port,
+                         usr=cam.usr,
+                         pwd=cam.pwd,
+                         digest_auth=cam.digest_auth,
+                         ssl=cam.ssl,
+                         verify_ssl=cam.verify_ssl,
+                         sec_lvl=cam.sec_lvl)
+                vivocam.do('do0',1)
             else:
                 print('Erro de validación en cam',cam.nombre)
 

@@ -63,7 +63,7 @@ class ResponsAdmin(admin.ModelAdmin):
 class CamarasAdmin(admin.ModelAdmin):
     change_form_template = "admin/camaras/cam_form.html"
     list_display = ['nombre','estado','sensib','fuente','detect_todo','op_ini','op_fin'] 
-    readonly_fields = ('actualizado', 'imagen', 'secreto', 'error_msg', 'estado' )
+    readonly_fields = ('actualizado', 'imagen', 'secreto', 'error_msg', 'estado','cam_model' )
 
 
     def imagen(self, obj):
@@ -99,6 +99,19 @@ class CamarasAdmin(admin.ModelAdmin):
                                 'max_contour_height',
                                 'dist_bg',
                                 'rep_alar_ni',)
+                    }),
+                ('Cámara Vivotek',{
+                    'classes':('collapse', 'open'),
+                    'fields': ( 'cam_model',
+                                'host',
+                                'port',
+                                'usr',
+                                'pwd',
+                                'digest_auth',
+                                'ssl',
+                                'verify_ssl',
+                                'sec_lvl',
+                                )
                     }),
                 )
 

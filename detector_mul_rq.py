@@ -645,7 +645,7 @@ class App:
                 if self.frame_idx > 1728000: # aprox 24 horas, reset lipieza
                     break
 
-                #cv.imshow("Frame", output_rgb)
+                cv.imshow("Frame", output_rgb)
                 #sender.send_image(nombre_cam, frame)
 
                 ch = cv.waitKey(1)
