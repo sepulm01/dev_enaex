@@ -11,7 +11,7 @@
     {% if user.is_authenticated %}
     <p>Su cuenta no tiene acceso a esta página. Para proceder, por favor ingrese con una cuenta con acceso.</p>
     {% else %}
-    <p>Por favor registrese para permitir el ingreso.</p>
+    <h5><p>Por favor registrese para permitir el ingreso.</p></h5>
     {% endif %}
 {% endif %}
 
@@ -28,7 +28,7 @@
 </tr>
 </table>
 
-<input type="submit" value="login">
+<input class="btn btn-secondary grey" type="submit" value="login">
 <input type="hidden" name="next" value="{{ next }}">
 </form>
 

@@ -9,7 +9,7 @@
 
 
 <div class="container">
- <h2> Bienvenido {{ user.first_name }} {{ user.last_name}}! </h2><p>usuario: {{ user.username}}</p>
+ <h3> Bienvenido {{ user.first_name }} {{ user.last_name}}! </h3><p>usuario: {{ user.username}}</p>
 
 <style type="text/css"> .alto{ height: 200px; }</style>
 
@@ -21,16 +21,16 @@
       <div class="card-body btn-primary">
         <h5 style="color:white;" class="card-title">Cámaras</h5>
         <p class="card-text">Ajustes rápidos de cámaras.</p>
-        <a  href="/camara" class="btn btn-light red">Ir a sección</a>
+        <a  href="/camara" class="btn btn-light green">Ir a sección</a>
       </div>
     </div>
   </div>
   <div class="col-sm-6">
     <div class="card">
-      <div class="card-body btn-danger">
+      <div class="card-body btn-info">
         <h5 style="color:white;" class="card-title">Alarmas</h5>
         <p class="card-text">Listado de eventos registrados.</p>
-        <a href="/alarmas/eventos" target="_blank" class="btn btn-light blue">Ir a sección</a>
+        <a href="/alarmas/eventos" target="_blank" class="btn btn-dark red">Ir a sección</a>
       </div>
     </div>
   </div>

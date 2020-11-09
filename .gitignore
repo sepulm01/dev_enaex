@@ -12,3 +12,4 @@ color/
 *.ipynb
 __pycache__/
 *.log
+streaming/

@@ -50,7 +50,7 @@ class VivotekCamera():
             self.verify_ssl = verify_ssl
 
         if sec_lvl not in SECURITY_LEVELS.keys():
-            raise VivotekCameraError("Invalid security level: %s" % sec_lvl)
+            raise VivotekCameraError("Nivel de seguridad invalido: %s" % sec_lvl)
 
         if usr is None or sec_lvl == 'anonymous':
             self._requests_auth = None
@@ -114,7 +114,7 @@ class VivotekCamera():
     def set_param(self, param, value):
         """Set and return the value of the provided key."""
         if SECURITY_LEVELS[self._security_level] < 4:
-            raise VivotekCameraError("Security level %s is too low to set parameters."
+            raise VivotekCameraError("Nivel de seguridad %s es muy bajo para fijar parametros."
                                      % self._security_level)
 
         try:
@@ -133,7 +133,7 @@ class VivotekCamera():
     def do(self, param, value):
         """Gatilla la puerta Digital Output de la camara."""
         if SECURITY_LEVELS[self._security_level] < 4:
-            raise VivotekCameraError("Security level %s is too low to set parameters."
+            raise VivotekCameraError("Nivel de seguridad %s es muy bajo para fijar parametros."
                                      % self._security_level)
         try:
             response = requests.post(
@@ -166,6 +166,6 @@ class VivotekCamera():
         if 'ERROR' in response.text:
             raise VivotekCameraError(response.text)
         if response.status_code == 401:
-            raise VivotekCameraError('Unauthorized. Credentials may be invalid.')
+            raise VivotekCameraError('No autoriado. Credenciales posiblemente invalidas.')
 
         return response.text.strip().split('=')[1].replace("'", "")
