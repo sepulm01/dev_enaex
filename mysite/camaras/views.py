@@ -228,6 +228,8 @@ def alarma_post(request):
                                 cantidad=cantidad,
                                 video=video)
                 nueva_alarma.save()
+                evento = Eventos.objects.get(proced=True)
+                print("evento",evento)
                 vivocam = VivotekCamera(host=cam.host,
                          port=cam.port,
                          usr=cam.usr,

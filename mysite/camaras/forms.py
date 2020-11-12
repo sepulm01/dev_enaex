@@ -13,6 +13,8 @@ class CamarasForm(forms.ModelForm):
     ''' Formulario para poder re editar un procedimiento cerrado, para ello se habilitó una vista Requerimientos Direcotor,
      donde el usuario que tenga perfil de director pueda volver el estado del código de cierre en null
      '''
+
+
     class Meta:
         fields = (
             'nombre',
@@ -23,6 +25,7 @@ class CamarasForm(forms.ModelForm):
             'areas',
             'op_ini',
             'op_fin',
+            'pwd',
             )
         model = models.Camara
 
