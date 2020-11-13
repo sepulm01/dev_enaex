@@ -484,13 +484,13 @@ class App:
 
                 if area_mask: #Coloca una mascara al area de deteccion para limitar el n de ids seguidor.
                     frame_msk = cv.add(mask_fg,frame_gray)
-                    draw_str(frame, (350, 40), 'Area')
+                    #draw_str(frame, (350, 40), 'Area')
                 else:
                     frame_msk = frame
 
                 ############background sub #######################################
                 if b_ground_sub:
-                    draw_str(frame, (350, 27), 'BG Sub')
+                    #draw_str(frame, (350, 27), 'BG Sub')
                     #dst = cv.add(mask_fg,frame_msk) #frame2bg
                     fg_mask = bg_subtractor.apply(frame_msk, None, 0.001) # back ground detector
                     fg_mask = filter_mask(fg_mask) # back ground detector
@@ -532,7 +532,7 @@ class App:
                         drk_q.put(frame_msk) # alimenta la cola del detector
                     
                     sensib_q.put(sensibilidad) # Sensibilidad de deteccion o nivel de confianza 
-                    draw_str(frame, (10, 30), str(drk_q.qsize()))
+                    #draw_str(frame, (10, 30), str(drk_q.qsize()))
   
                 if isort_q.empty() != True:
                     logger.info("pipeline: deteccion hecha")
@@ -635,9 +635,9 @@ class App:
                     cv.putText(output_rgb, str(i), totuple((dibujo[i])[0:1][0]), cv.FONT_HERSHEY_SIMPLEX, .7, (0, 255, 0),2)
 
                 draw_str(output_rgb, (10, 15), nombre_cam)
-                draw_str(output_rgb, (10, 30), "alarma  " + str(alarma))
-                draw_str(output_rgb, (10, 45), "Turno    " + str(en_turno(ini,fin)))
-                draw_str(output_rgb, (10, 60), "objeto_ni " + str(objeto_ni))
+                #draw_str(output_rgb, (10, 30), "alarma  " + str(alarma))
+                #draw_str(output_rgb, (10, 45), "Turno    " + str(en_turno(ini,fin)))
+                #draw_str(output_rgb, (10, 60), "objeto_ni " + str(objeto_ni))
                 #draw_str(output_rgb, (10, 75), "pts  " + str(pts))
 
                 if hilo10.is_alive()==False: #bota la app si se cae la coneccion a la GPU.

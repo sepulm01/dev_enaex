@@ -25,7 +25,7 @@ class CamarasForm(forms.ModelForm):
             'areas',
             'op_ini',
             'op_fin',
-            'pwd',
+            
             )
         model = models.Camara
 

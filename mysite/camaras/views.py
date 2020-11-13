@@ -228,17 +228,18 @@ def alarma_post(request):
                                 cantidad=cantidad,
                                 video=video)
                 nueva_alarma.save()
-                evento = Eventos.objects.get(proced=True)
+                evento = Eventos.objects.filter(proced=True)
                 print("evento",evento)
-                vivocam = VivotekCamera(host=cam.host,
-                         port=cam.port,
-                         usr=cam.usr,
-                         pwd=cam.pwd,
-                         digest_auth=cam.digest_auth,
-                         ssl=cam.ssl,
-                         verify_ssl=cam.verify_ssl,
-                         sec_lvl=cam.sec_lvl)
-                vivocam.do('do0',1)
+                if len(evento)==0:
+                    vivocam = VivotekCamera(host=cam.host,
+                             port=cam.port,
+                             usr=cam.usr,
+                             pwd=cam.pwd,
+                             digest_auth=cam.digest_auth,
+                             ssl=cam.ssl,
+                             verify_ssl=cam.verify_ssl,
+                             sec_lvl=cam.sec_lvl)
+                    vivocam.do('do0',1)
             else:
                 print('Erro de validación en cam',cam.nombre)
 
@@ -457,6 +458,7 @@ def upd_envio(request):
     if estado == "1":
         eve.proced=True
         eve.save()
+        apaga_do()
     elif estado == "2":
         eve.proced=False
         eve.activo=False
@@ -471,3 +473,17 @@ def upd_envio(request):
 
     return JsonResponse(jgps)
 
+def apaga_do():
+    ''' Rutina para apagar las señal digital output de todas las cámaras'''
+    pass
+    camaras=Camara.objects.all()
+    for cam in camaras:
+        vivocam = VivotekCamera(host=cam.host,
+         port=cam.port,
+         usr=cam.usr,
+         pwd=cam.pwd,
+         digest_auth=cam.digest_auth,
+         ssl=cam.ssl,
+         verify_ssl=cam.verify_ssl,
+         sec_lvl=cam.sec_lvl)
+        vivocam.do('do0',0)
