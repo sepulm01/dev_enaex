@@ -224,7 +224,11 @@ pip3 install -U "celery[redis]"
 
 ## IP FIJA
 
-´´´
+
+```
+cd /etc/netplan
+sudo nano xxxx.yaml
+
 # This is the network config written by 'subiquity'
 #network:
 #  ethernets:
@@ -246,4 +250,7 @@ network:
        addresses: [8.8.8.8]
   version: 2
 
-´´´
+
+sudo netplan generate
+sudo netplan apply
+```
