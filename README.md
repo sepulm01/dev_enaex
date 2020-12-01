@@ -224,7 +224,7 @@ pip3 install -U "celery[redis]"
 
 ## IP FIJA
 
-'''
+´´´
 # This is the network config written by 'subiquity'
 #network:
 #  ethernets:
@@ -246,4 +246,4 @@ network:
        addresses: [8.8.8.8]
   version: 2
 
-'''
+´´´
