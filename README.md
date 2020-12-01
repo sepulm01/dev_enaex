@@ -220,3 +220,30 @@ WantedBy=multi-user.target
 #Celery
 pip3 install -U Celery
 pip3 install -U "celery[redis]"
+
+
+## IP FIJA
+
+'''
+# This is the network config written by 'subiquity'
+#network:
+#  ethernets:
+#    enp3s0:
+#      dhcp4: true
+#  version: 2
+
+# This file describes the network interfaces available on your system
+# For more information, see netplan(5).
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp3s0:
+     dhcp4: false
+     addresses: [10.187.70.11/24]
+     gateway4: 10.187.70.1
+     nameservers:
+       addresses: [8.8.8.8]
+  version: 2
+
+'''
