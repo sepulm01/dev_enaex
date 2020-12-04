@@ -413,7 +413,7 @@ class App:
         intermitente = False # flag intermitencia en color de las areas.
         objeto_ni = False #flat de gatilla alarma de objeto No Identificado
         contador_obj_det =0 #contador num veces obj detec antes de gatillar la alarma de los NI        
-
+        mtx_bgdet = np.zeros((1,2))
         ###### SOCKETS ############################
         conecto = True
         host =  '0.0.0.0'
@@ -459,6 +459,7 @@ class App:
         tracks = []
         while(cap.isOpened()):
             inicio = timer()
+            timestamp = datetime.timestamp(datetime.now(tz))
             time_elapsed = time.time() - prev
             if time_elapsed > 1./frame_rate:
                 _ret, frame_ori = cap.read()
@@ -499,6 +500,10 @@ class App:
                     for e in bg_detect:
                         rects.append(e[0:4].astype("int"))
                         x,y,a,b = e[0],e[1],e[2],e[3]
+                        areapx = (a-x)*(b-y)
+                        
+                        mtx_bgdet=np.append(mtx_bgdet,[[areapx,timestamp]],axis=0)
+                        #print(mtx_bgdet, [areapx,timestamp])
                         cv.rectangle(fg_mask, (x, y), (a, b) , (255, 255, 255), 1)
                     #print(len(bg_detect))
 
@@ -557,18 +562,23 @@ class App:
                 else:
                     i_sort = np.array([])
                 
-                if alarma == False and en_turno(ini,fin) and objeto_ni==True and contador_obj_det>rep_alar_ni:
-                    # gatilla alarma de objeto No Indentificados.
-                    print("pre pasa x alarma NI")
-                    record=datetime.now(tz)+timedelta(seconds=3)
-                    if record > datetime.now(tz):
-                        print('contador_obj_det',contador_obj_det)
-                        contador_obj_det =0
-                        print('alarma',self.frame_idx )
-                        alarma = True
-                        ni = np.array([0, 0, 0, 0, 100, 0])
-                        ni = ni.reshape((1,6))
-                        vid_writer, alarma = gatilla_alarma(ni,secreto)
+                # if alarma == False and en_turno(ini,fin) and objeto_ni==True and contador_obj_det>rep_alar_ni:
+                #     if mtx_bgdet.shape[0]>1:
+                #         ini_=datetime.fromtimestamp(mtx_bgdet[1][1])
+                #         fin_=datetime.fromtimestamp(mtx_bgdet[-1][1])
+                #         print(int(mtx_bgdet[:,0].mean()), mtx_bgdet.shape, fin_ - ini_) 
+                #         mtx_bgdet = np.zeros((1,2))
+                #     # gatilla alarma de objeto No Indentificados.
+                #     print("pre pasa x alarma NI")
+                #     record=datetime.now(tz)+timedelta(seconds=3)
+                #     if record > datetime.now(tz):
+                #         print('contador_obj_det',contador_obj_det)
+                #         contador_obj_det =0
+                #         print('alarma',self.frame_idx )
+                #         alarma = True
+                #         ni = np.array([0, 0, 0, 0, 100, 0])
+                #         ni = ni.reshape((1,6))
+                #         vid_writer, alarma = gatilla_alarma(ni,secreto)
 
                 if bgshow and b_ground_sub:
                     cv.imshow(winbGround,fg_mask)
@@ -635,7 +645,7 @@ class App:
                     cv.putText(output_rgb, str(i), totuple((dibujo[i])[0:1][0]), cv.FONT_HERSHEY_SIMPLEX, .7, (0, 255, 0),2)
 
                 draw_str(output_rgb, (10, 15), nombre_cam)
-                #draw_str(output_rgb, (10, 30), "alarma  " + str(alarma))
+                draw_str(output_rgb, (10, 30), "alarma  " + str(alarma))
                 #draw_str(output_rgb, (10, 45), "Turno    " + str(en_turno(ini,fin)))
                 #draw_str(output_rgb, (10, 60), "objeto_ni " + str(objeto_ni))
                 #draw_str(output_rgb, (10, 75), "pts  " + str(pts))
@@ -691,7 +701,9 @@ def main():
         disp=None
         with input_q.mutex:
             input_q.queue.clear()
-
+            drk_q.queue.clear() 
+            sensib_q.queue.clear()
+            isort_q.queue.clear() 
 
 if __name__ == '__main__':
     main()

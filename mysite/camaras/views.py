@@ -24,10 +24,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import make_aware , now
 from django.forms.models import model_to_dict
 from .vivotek import VivotekCamera
+import json
 
 SCL = pytz.timezone(settings.TIME_ZONE)
 path = 'media/alarmas/'
 #path = '/var/www/mysite/media/alarmas/'
+
+coco=['persona', 'bicicleta', 'auto', 'moto', 'avión', 'autobús', 'tren', 'camión', 'barco', 'semáforo', 'boca de incendios', 'señal de parada', 'parquímetro', 'banco', 'pájaro', 'gato', 'perro',
+ 'caballo', 'oveja', 'vaca', 'elefante', 'oso', 'cebra', 'jirafa', 'mochila', 'paraguas', 'bolso', 'corbata', 'maleta', 'frisbee', 'esquís','bola de nieve','pelota' 'cometa', 'bate',
+  'guante de béisbol', 'patineta', 'tabla de surf', 'raqueta', 'botella', 'copa de vino', 'taza', 'tenedor', 'cuchillo', 'cuchara', 'tazón', 'banana', 'sándwich', 'manzana', 'naranja',
+   'brócoli', 'zanahoria', 'hot dog', 'pizza', 'donut', 'pastel', 'silla', 'sofá', 'maceta', 'cama', 'maceta', 'comedor', 'inodoro', 'tvmonitor', 'laptop', 'mouse', 'teclado remoto',
+    'teléfono', 'celular', 'horno', 'microondas', 'tostador', 'fregadero', 'refrigerador', 'libro', 'reloj', 'florero', 'tijeras', 'peluche', 'secador de pelo', 'cepillo de dientes']
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':
@@ -221,10 +228,14 @@ def alarma_post(request):
             cam=Camara.objects.get(nombre=camara)
             if secreto == cam.secreto:
                 print('cam.secreto iguales en alarma_post',video)
+                clases=[]
+                clase = json.loads(clase)
+                for c in clase:
+                    clases.append(coco[int(c)])
                 nueva_alarma = Alarmas(
                                 camara=cam,
                                 tiempo=tiempo,
-                                clase=clase,
+                                clase=clases,
                                 cantidad=cantidad,
                                 video=video)
                 nueva_alarma.save()
@@ -239,7 +250,7 @@ def alarma_post(request):
                              ssl=cam.ssl,
                              verify_ssl=cam.verify_ssl,
                              sec_lvl=cam.sec_lvl)
-                    vivocam.do('do0',1)
+                    #vivocam.do('do0',1)
             else:
                 print('Erro de validación en cam',cam.nombre)
 

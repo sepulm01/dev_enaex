@@ -23,9 +23,7 @@
     </div>
 </div>
 
-<div>
-    <img style="-webkit-user-select: none;margin: auto;" src="http://192.168.0.104/video2.mjpg" width="482" height="271">
-</div>
+
 
 
 <script> 
@@ -40,11 +38,9 @@ function pauseVid() {
 } 
 </script>
 
-
-
-
-<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-<script type="text/javascript">
+<!-- <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script> -->
+{% endblock %}
+    {% block jquery %}
 $(function () {
         if ($("#id_areas").val()){
                 var polyLines = JSON.parse($("#id_areas").val());
@@ -152,6 +148,7 @@ $(function () {
             draw();
         });
 });
-</script>
 
 {% endblock %}
+
+

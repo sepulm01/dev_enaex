@@ -13,7 +13,7 @@ from django.utils.html import strip_tags
 
 @receiver(post_save, sender=Alarmas)
 def alarma_gatillada(sender, instance, created, **kwargs):
-    num = '+56949010958'
+    #num = '+56949010958'
     eve = Eventos.objects.filter(activo=True)
     resp = Responsables.objects.filter(estado=True)
     niv0 = []

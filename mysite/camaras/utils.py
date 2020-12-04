@@ -6,6 +6,8 @@ from .models import Ajustes
 import datetime
 from django.utils.timezone import make_aware , now
 import time
+from .vivotek import VivotekCamera
+import json
 
 def seguimiento():
     pass
@@ -57,3 +59,29 @@ def check_cam():
             cam.error_msg = 'Sin actualización de nodo desde {}'.format(diferencia)
             cam.save()
             #print ('Cambio en',cam.nombre, cam.estado, cam.error_msg)
+        else:
+            vivocam = VivotekCamera(host=cam.host,
+                             port=cam.port,
+                             usr=cam.usr,
+                             pwd=cam.pwd,
+                             digest_auth=cam.digest_auth,
+                             ssl=cam.ssl,
+                             verify_ssl=cam.verify_ssl,
+                             sec_lvl=cam.sec_lvl)
+            lar, alt = 608, 608
+            factorx = 9999/lar
+            factory = 9999/alt
+            areas = json.loads(cam.areas)
+            for i,a in enumerate(areas):
+                lista = []
+                for aa in a:
+                    lista.append(int(aa['x']*factorx))
+                    lista.append(int(aa['y']*factory))
+                listToStr = ','.join([str(elem) for elem in lista])
+                if i <=4:
+                    vivocam.set_param('motion_c0_win_i'+str(i)+'_enable','1')
+                    vivocam.set_param('motion_c0_win_i'+str(i)+'_name',i)
+                    vivocam.set_param('motion_c0_win_i'+str(i)+'_polygonstd',listToStr)
+                    vivocam.set_param('motion_c0_profile_i0_win_i'+str(i)+'_name',i)
+                    vivocam.set_param('motion_c0_profile_i0_win_i'+str(i)+'_polygonstd',listToStr)
+                    

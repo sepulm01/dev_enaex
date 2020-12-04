@@ -26,7 +26,8 @@ class Drk:
 			pnet.network_height(self.netMain),3)
 
 	def dark(self, frame, thresh=0.75):
-		clases = [0,2,3,4,5,6,7,8,9,10] #clases a seguir
+		#clases = [0,2,3,4,5,6,7,8,9,10] #clases a seguir
+		clases = list(range(0,81))
 		
 		def convertBack(x, y, w, h):
 			xmin = int(round(x - (w / 2))) 
