@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables, RegAcciones
+from .models import Camara, Alarmas, Eventos, RegAcciones, Responsables, RegAcciones, Licencia
 from django.utils.safestring import mark_safe
 import base64
 from .views import path, borra_video_zombi
@@ -43,6 +43,11 @@ class RegAccInline(admin.TabularInline):
 class RegAcciones(admin.ModelAdmin):
     list_display = ['tiempo','accion','evento',]
     readonly_fields = ('tiempo','accion','evento',)
+
+@admin.register(Licencia)
+class Licencia(admin.ModelAdmin):
+    list_display = ['fecha_caducidad',]
+    readonly_fields = ('fecha_caducidad',)
 
 @admin.register(Eventos)
 class EventosAdmin(admin.ModelAdmin):
@@ -98,7 +103,7 @@ class CamarasAdmin(admin.ModelAdmin):
                                 'max_contour_width',
                                 'max_contour_height',
                                 'dist_bg',
-                                'rep_alar_ni',)
+                                'rep_alar_ni', 'min_area_mean',  'time_min')
                     }),
                 ('Cámara Vivotek',{
                     'classes':('collapse', 'open'),

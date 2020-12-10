@@ -24,6 +24,8 @@ class Camara(models.Model):
     dist_bg = models.IntegerField('Distancia recorrida px', default=290)
     rep_alar_ni = models.IntegerField('Rep alarm en fr', default=20)
     error_msg = models.CharField('Msg error',blank=True, null=True,max_length=300)
+    min_area_mean = models.IntegerField('Área min prom', blank=True, null=True)
+    time_min = models.TimeField('Tiempo mín',auto_now=False, auto_now_add=False, blank=True, null=True  )
     #Parametros vivotek
     cam_model = models.CharField('Modelo',blank=True, null=True,max_length=30)
     host=models.CharField('cam host',blank=True, null=True,max_length=15, default='0.0.0.0')
@@ -116,4 +118,8 @@ class Ajustes(models.Model):
 
     class Meta:
         verbose_name_plural = "Ajustes"
+
+class Licencia(models.Model):
+    fecha_caducidad = models.DateTimeField('Fecha de caducidad',auto_now_add=False)
+    clave = models.TextField('clave',max_length=256)
         

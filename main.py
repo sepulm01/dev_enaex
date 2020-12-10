@@ -1,4 +1,4 @@
-from dev_enaex_v0 import main  
+from detector_mul_rq import main  
 
 # this comes from a compiled binary
 main ()

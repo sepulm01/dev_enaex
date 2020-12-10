@@ -9,7 +9,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse, HttpResponse
 from .forms import CamarasForm, EventosForm
-from .models import Camara, Alarmas, Eventos, RegAcciones
+from .models import *
 import pandas as pd
 import base64
 from django.conf import settings
@@ -25,6 +25,7 @@ from django.utils.timezone import make_aware , now
 from django.forms.models import model_to_dict
 from .vivotek import VivotekCamera
 import json
+from datetime import datetime
 
 SCL = pytz.timezone(settings.TIME_ZONE)
 path = 'media/alarmas/'
@@ -34,7 +35,7 @@ coco=['persona', 'bicicleta', 'auto', 'moto', 'avión', 'autobús', 'tren', 'cam
  'caballo', 'oveja', 'vaca', 'elefante', 'oso', 'cebra', 'jirafa', 'mochila', 'paraguas', 'bolso', 'corbata', 'maleta', 'frisbee', 'esquís','bola de nieve','pelota' 'cometa', 'bate',
   'guante de béisbol', 'patineta', 'tabla de surf', 'raqueta', 'botella', 'copa de vino', 'taza', 'tenedor', 'cuchillo', 'cuchara', 'tazón', 'banana', 'sándwich', 'manzana', 'naranja',
    'brócoli', 'zanahoria', 'hot dog', 'pizza', 'donut', 'pastel', 'silla', 'sofá', 'maceta', 'cama', 'maceta', 'comedor', 'inodoro', 'tvmonitor', 'laptop', 'mouse', 'teclado remoto',
-    'teléfono', 'celular', 'horno', 'microondas', 'tostador', 'fregadero', 'refrigerador', 'libro', 'reloj', 'florero', 'tijeras', 'peluche', 'secador de pelo', 'cepillo de dientes']
+    'teléfono', 'celular', 'horno', 'microondas', 'tostador', 'fregadero', 'refrigerador', 'libro', 'reloj', 'florero', 'tijeras', 'peluche', 'secador de pelo', 'cepillo de dientes','NA',"NA"]
 
 def fformato(serie):
     #if  serie.dtype.str != '|O':
@@ -130,7 +131,7 @@ def borra_alarmas(request):
     l1 = []
     for i in lista:
         l1.append(int(i))
-    print(type(l1),l1)
+    #print(type(l1),l1)
     selec = Alarmas.objects.filter(pk__in=l1)
     for i in selec.values('video'):
         print(i['video'])
@@ -231,6 +232,7 @@ def alarma_post(request):
                 clases=[]
                 clase = json.loads(clase)
                 for c in clase:
+                    print(c,'c')
                     clases.append(coco[int(c)])
                 nueva_alarma = Alarmas(
                                 camara=cam,
@@ -267,8 +269,9 @@ def camviva_post(request):
         tiempo = request.POST['tiempo']
         image = request.POST['image']
         image=bytearray(image,'ISO-8859-1') 
-        print('image', type(image))
-        secreto  = request.POST['secreto']
+        #print('image', type(image))
+        secreto  = request.POST['secreto'] 
+        lic  = request.POST['lic']
         if camara is not None:
             cam=Camara.objects.get(nombre=camara)
             if secreto == cam.secreto:
@@ -280,6 +283,12 @@ def camviva_post(request):
                 cam.save()
             else:
                 print('Erro de validación en camviva_post, cámara:',cam.nombre)
+        if lic is not None: #2020-12-12T07:00:00Z
+            d1 = datetime.strptime(lic,"%Y-%m-%dT%H:%M:%SZ") 
+            lic=Licencia.objects.get(pk=1)
+            lic.fecha_caducidad = d1
+            lic.save()
+            #print(lic,type(lic),"esto es Lic"*100)
 
     data = {
           "data": "data",
@@ -293,6 +302,7 @@ def cam_disp(request,id):
     if request.method == 'GET':
         if request.GET['a']=='2485987abr':
             cam=Camara.objects.get(pk=id)
+            lic=Licencia.objects.get(pk=1)
             data = {
                   'pk': cam.pk,
                   'nombre': cam.nombre,
@@ -311,7 +321,10 @@ def cam_disp(request,id):
                   'mach': cam.max_contour_height,
                   'dist_bg': cam.dist_bg,
                   'rep_alar_ni': cam.rep_alar_ni,
-
+                  'min_area_mean': cam.min_area_mean,
+                  'time_min' : cam.time_min,
+                  'fecha_caducidad' : lic.fecha_caducidad,
+                  'clave': lic.clave,
                 }
 
     return JsonResponse(data, safe=False)
@@ -407,7 +420,7 @@ def eventos(request, id):
         form = EventosForm(request.POST, instance=instance)
         form.save()
         if form.is_valid():
-            print("paso x aquí EventosForm",)
+            #print("paso x aquí EventosForm",)
             # redirect to a new URL:
             return redirect('eventos_list')
         else:

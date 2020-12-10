@@ -13,7 +13,6 @@ import numpy as np
 import cv2 as cv
 from centroidtracker import CentroidTracker
 import os
-#from drk import Drk
 import queue
 import threading
 import time
@@ -24,9 +23,6 @@ import multiprocessing as mul
 import socket
 import random
 from struct import *
-#import imagezmq
-#from sql.bd_django import basedatos
-#from sql.basedatospg import bdremota
 import requests
 import json
 import matplotlib.path as mpltPath
@@ -34,8 +30,11 @@ import sys
 import pytz
 from tzlocal import get_localzone
 import logging
-#from django.db import models
 from scipy.spatial import distance
+import Crypto
+from Crypto.PublicKey import RSA
+import binascii 
+from Crypto.Cipher import PKCS1_OAEP
 
 no_resetear = True
 input_q = queue.Queue(maxsize=1500)
@@ -56,6 +55,9 @@ logging.basicConfig(filename=str(cam_worker)+"detector_mul_rq.log",
     filemode = "w")
 logger = logging.getLogger()
 logger.info("Inicio logger")
+
+private_key="3082025c02010002818100bf32f1f92407337ca27ce93724c858f79e2deea0149ed9d7d1ee3c9599b0d06dc55818f2a89efb3cc2d9021d07e9659bc98bc6a115dfd23ea28b83bd94388bba5af9161ed9e91055fec8a8de2cac5a0fb9e9e8d23d376969a8a2b62071a979faf3c6825dcbcb90f04467d6678674eade19d1f797e1d563fb162b8212b4c5a631020301000102818012b12154d0ffdf39b50cef23d3f5be34df02f08c37d7dbc62ca0d4cd6f4c08e462619d76c3a35f3e6e7216b1cddf346ec9825fb5c9d4aad232c3deea3ebe5472853b9e563569ff78f07660dc2db144b84f954f31a25e62154a9b57d53c32746b6bb797b6d81e5ec20518208fae162710be9b7487e1a5df02c7fec5eebc6acdad024100d3c54a671894041d9f511f1ed7b106cc37a3f5afd6425b63007e2932f7bfe3d0235ddcc36177d5f5736fd3a6572886e6d3cc1f14ab934d498b7be5c156ceffb3024100e721c0b25efdd3e263bac58a2b02803b39cec4de03b481df4fef124756343347c6e60d6ea1422790bcfc199e098bdffe8f03d7a8f6a859b6d0d3bbe72633f08b024100aa33265935a7c0a70e24649ea53be1fabfbd46f8cb7b0977c82d9d6f192f6029284387ea7fab908a74fcab5e452e8d3d777bd67f06669cf73ee395048e804f8102402fc5f0386e1df4efb44164973c7095e4a7fc2f00dcaf30b0e1aabe927424f1fc820606fcb8e41d9d7312809103d41f8654352d1c456f62abc0da22da9230e6250240584b05f73ed781ea083b736eff4eea11c8732ed96ad7e78cc0b02d8319d6cc718592d5ca50b4b7330a700214e3e2e6e653bdcb31b59fe4055d6068e9ce060e60"
+private_key = RSA.importKey(binascii.unhexlify(private_key))
 
 class App:
     def __init__(self):
@@ -355,7 +357,21 @@ class App:
         micw,mich,macw,mach = ajts['micw'],ajts['mich'],ajts['macw'],ajts['mach']
         con = np.zeros((1,len(dibujo)+1)) # Matriz de congestion
         con[0][0]=1 # Variable de congestion
-        
+        tiempo_min_serv = ajts['time_min']
+        area_min_serv = ajts['min_area_mean']
+        fecha_caducidad = ajts['fecha_caducidad']
+        ######################  Validación Licenciamiento ############################
+        clave = ajts['clave']
+        clave = binascii.unhexlify(clave)
+        cipher = PKCS1_OAEP.new(private_key)
+        message = cipher.decrypt(clave)
+        message = message.decode('utf-8')
+        d1 = datetime.strptime(message,"%Y-%m-%dT%H:%M:%SZ") #"2013-07-12T07:00:00Z"
+        if d1 < datetime.now():
+            logger.warning("Licenciamiento: Fecha de fecha caducidad alcanzada")
+            print("Licenciamiento: Fecha de fecha caducidad alcanzada",fecha_caducidad)
+            time.sleep(30)
+            exit()
         cap = cv.VideoCapture(fuente)
         _ret, frame = cap.read()
         if _ret == False:
@@ -501,8 +517,8 @@ class App:
                         rects.append(e[0:4].astype("int"))
                         x,y,a,b = e[0],e[1],e[2],e[3]
                         areapx = (a-x)*(b-y)
-                        
-                        mtx_bgdet=np.append(mtx_bgdet,[[areapx,timestamp]],axis=0)
+                        if alarma==False:
+                            mtx_bgdet=np.append(mtx_bgdet,[[areapx,timestamp]],axis=0)
                         #print(mtx_bgdet, [areapx,timestamp])
                         cv.rectangle(fg_mask, (x, y), (a, b) , (255, 255, 255), 1)
                     #print(len(bg_detect))
@@ -562,23 +578,29 @@ class App:
                 else:
                     i_sort = np.array([])
                 
-                # if alarma == False and en_turno(ini,fin) and objeto_ni==True and contador_obj_det>rep_alar_ni:
-                #     if mtx_bgdet.shape[0]>1:
-                #         ini_=datetime.fromtimestamp(mtx_bgdet[1][1])
-                #         fin_=datetime.fromtimestamp(mtx_bgdet[-1][1])
-                #         print(int(mtx_bgdet[:,0].mean()), mtx_bgdet.shape, fin_ - ini_) 
-                #         mtx_bgdet = np.zeros((1,2))
-                #     # gatilla alarma de objeto No Indentificados.
-                #     print("pre pasa x alarma NI")
-                #     record=datetime.now(tz)+timedelta(seconds=3)
-                #     if record > datetime.now(tz):
-                #         print('contador_obj_det',contador_obj_det)
-                #         contador_obj_det =0
-                #         print('alarma',self.frame_idx )
-                #         alarma = True
-                #         ni = np.array([0, 0, 0, 0, 100, 0])
-                #         ni = ni.reshape((1,6))
-                #         vid_writer, alarma = gatilla_alarma(ni,secreto)
+                ########################## alarma bg sub ########################################################
+                if alarma == False and en_turno(ini,fin) and objeto_ni==True and contador_obj_det>rep_alar_ni:
+                    if mtx_bgdet.shape[0]>1:
+                        ini_=datetime.fromtimestamp(mtx_bgdet[1][1])
+                        fin_=datetime.fromtimestamp(mtx_bgdet[-1][1])
+                        tiempo_min = fin_ - ini_
+                        area_min = int(mtx_bgdet[:,0].mean())
+                        tiempo_min_serv = timedelta(seconds=3)
+                        print('tiempo_min_serv',tiempo_min_serv)
+                        if tiempo_min > tiempo_min_serv and area_min > area_min_serv:
+                            print(area_min , mtx_bgdet.shape, tiempo_min) 
+                            mtx_bgdet = np.zeros((1,2))
+                            # gatilla alarma de objeto No Indentificados.
+                            print("pre pasa x alarma NI")
+                            record=datetime.now(tz)+timedelta(seconds=3)
+                            if record > datetime.now(tz):
+                                print('contador_obj_det',contador_obj_det)
+                                contador_obj_det =0
+                                print('alarma',self.frame_idx )
+                                alarma = True
+                                ni = np.array([0, 0, 0, 0, 81, 0])
+                                ni = ni.reshape((1,6))
+                                vid_writer, alarma = gatilla_alarma(ni,secreto)
 
                 if bgshow and b_ground_sub:
                     cv.imshow(winbGround,fg_mask)
@@ -599,7 +621,8 @@ class App:
                         'camara': nombre_cam,
                         'tiempo': datetime.now(tz),
                         'image': data,
-                        'secreto':secreto
+                        'secreto':secreto,
+                        'lic': message,
                         }
                     print('actializa')
                     envia_rq(urlcamviva, camvload)
