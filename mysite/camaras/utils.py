@@ -20,10 +20,10 @@ def espacio_d():
     porcentaje= disk_usage.percent
 
     if porcentaje > 90:
-        print("Espacio total: {:.2f} GB.".format(total))
-        print("Espacio libre: {:.2f} GB.".format(libre))
-        print("Espacio usado: {:.2f} GB.".format(usado))
-        print("Porcentaje de espacio usado: {}%.".format(porcentaje))
+        #print("Espacio total: {:.2f} GB.".format(total))
+        #print("Espacio libre: {:.2f} GB.".format(libre))
+        #print("Espacio usado: {:.2f} GB.".format(usado))
+        #print("Porcentaje de espacio usado: {}%.".format(porcentaje))
         user = User.objects.all()
         for u in user:
             if u.is_superuser and u.email is not None:

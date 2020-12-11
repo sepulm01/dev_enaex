@@ -134,7 +134,7 @@ def borra_alarmas(request):
     #print(type(l1),l1)
     selec = Alarmas.objects.filter(pk__in=l1)
     for i in selec.values('video'):
-        print(i['video'])
+        #print(i['video'])
         try:
             os.remove(path + i['video'])
         except:
@@ -228,11 +228,11 @@ def alarma_post(request):
         if camara is not None:
             cam=Camara.objects.get(nombre=camara)
             if secreto == cam.secreto:
-                print('cam.secreto iguales en alarma_post',video)
+                #print('cam.secreto iguales en alarma_post',video)
                 clases=[]
                 clase = json.loads(clase)
                 for c in clase:
-                    print(c,'c')
+                    #print(c,'c')
                     clases.append(coco[int(c)])
                 nueva_alarma = Alarmas(
                                 camara=cam,
@@ -242,7 +242,7 @@ def alarma_post(request):
                                 video=video)
                 nueva_alarma.save()
                 evento = Eventos.objects.filter(proced=True)
-                print("evento",evento)
+                #print("evento",evento)
                 if len(evento)==0:
                     vivocam = VivotekCamera(host=cam.host,
                              port=cam.port,
@@ -476,7 +476,7 @@ def upd_envio(request):
     '''rutina AJAX para actualizar ESTADO de la Unidad enviada.'''
     estado = request.GET.get('estado')
     eve_id = request.GET.get('eve_id')
-    print('estado',estado, 'algo')
+    #print('estado',estado, 'algo')
 
     eve = get_object_or_404(Eventos, pk=eve_id)
     if estado == "1":
@@ -489,7 +489,8 @@ def upd_envio(request):
         eve.t_fin=now()
         eve.save()
     else:
-        print("NO PESCO ")
+        pass
+        #print("NO PESCO ")
 
     jgps = {"estado":estado,
         'req_id':eve.pk,
