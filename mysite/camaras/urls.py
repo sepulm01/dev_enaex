@@ -9,6 +9,7 @@ from camaras.views import  ( alarma_post,
                             cam_disp,
                             camviva_post,
                             cam_down,
+                            licencia,
                             )
 
 urlpatterns = [
@@ -20,5 +21,6 @@ path('ajax/alarmas/', alarma_inst, name='alarma_inst'),
 path('alarmas/eventos', eventos_list, name='eventos_list'),
 path('alarmas/eventos/<int:id>/', eventos, name='eventos'),
 path('ajax/upd_envio/', upd_envio, name='upd_envio'),
-path('sobre/', TemplateView.as_view(template_name="sobre.html")),
+#path('sobre/', TemplateView.as_view(template_name="sobre.html")),
+path('sobre/', licencia, name='licencia'),
 ]

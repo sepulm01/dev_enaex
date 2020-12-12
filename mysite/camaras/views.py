@@ -512,3 +512,10 @@ def apaga_do():
          verify_ssl=cam.verify_ssl,
          sec_lvl=cam.sec_lvl)
         vivocam.do('do0',0)
+
+def licencia(request):
+    lic=Licencia.objects.all()[0]
+    content = {
+    'fecha': lic.fecha_caducidad
+    }
+    return render(request, 'sobre.html', content)
