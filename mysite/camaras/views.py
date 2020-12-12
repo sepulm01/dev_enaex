@@ -285,7 +285,7 @@ def camviva_post(request):
                 print('Erro de validación en camviva_post, cámara:',cam.nombre)
         if lic is not None: #2020-12-12T07:00:00Z
             d1 = datetime.strptime(lic,"%Y-%m-%dT%H:%M:%SZ") 
-            lic=Licencia.objects.get(pk=1)
+            lic=Licencia.objects.all()[0]
             lic.fecha_caducidad = d1
             lic.save()
             #print(lic,type(lic),"esto es Lic"*100)
@@ -302,7 +302,7 @@ def cam_disp(request,id):
     if request.method == 'GET':
         if request.GET['a']=='2485987abr':
             cam=Camara.objects.get(pk=id)
-            lic=Licencia.objects.get(pk=1)
+            lic=Licencia.objects.all()[0]
             data = {
                   'pk': cam.pk,
                   'nombre': cam.nombre,

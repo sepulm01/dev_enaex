@@ -254,3 +254,22 @@ network:
 sudo netplan generate
 sudo netplan apply
 ```
+
+# Update workers
+
+Comandos para hacer el update en nodo worker o server
+
+```
+sudo mkdir download
+sudo cd download
+sudo git clone https://github.com/sepulm01/dev_enaex.git
+cd dev_enaex
+python3 compile.py build_ext --inplace
+mv centroidtracker.cpython-36m-x86_64-linux-gnu.so centroidtracker.so
+mv common.cpython-36m-x86_64-linux-gnu.so common.so
+mv detector_mul_rq.cpython-36m-x86_64-linux-gnu.so detector_mul_rq.so
+cp *.so /home/sepulm01/dev_enaex
+cp main.py  /home/sepulm01/dev_enaex
+cd /home/sepulm01/
+sudo rm -r download
+```

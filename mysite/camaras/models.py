@@ -120,6 +120,6 @@ class Ajustes(models.Model):
         verbose_name_plural = "Ajustes"
 
 class Licencia(models.Model):
-    fecha_caducidad = models.DateTimeField('Fecha de caducidad',auto_now_add=False)
+    fecha_caducidad = models.DateTimeField('Fecha de caducidad',auto_now_add=False,blank=True, null=True, )
     clave = models.TextField('clave',max_length=256)
         
