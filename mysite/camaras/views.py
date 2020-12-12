@@ -28,8 +28,8 @@ import json
 from datetime import datetime
 
 SCL = pytz.timezone(settings.TIME_ZONE)
-path = 'media/alarmas/'
-#path = '/var/www/mysite/media/alarmas/'
+#path = 'media/alarmas/'
+path = '/var/www/mysite/media/alarmas/'
 
 coco=['persona', 'bicicleta', 'auto', 'moto', 'avión', 'autobús', 'tren', 'camión', 'barco', 'semáforo', 'boca de incendios', 'señal de parada', 'parquímetro', 'banco', 'pájaro', 'gato', 'perro',
  'caballo', 'oveja', 'vaca', 'elefante', 'oso', 'cebra', 'jirafa', 'mochila', 'paraguas', 'bolso', 'corbata', 'maleta', 'frisbee', 'esquís','bola de nieve','pelota' 'cometa', 'bate',
@@ -244,15 +244,16 @@ def alarma_post(request):
                 evento = Eventos.objects.filter(proced=True)
                 #print("evento",evento)
                 if len(evento)==0:
-                    vivocam = VivotekCamera(host=cam.host,
-                             port=cam.port,
-                             usr=cam.usr,
-                             pwd=cam.pwd,
-                             digest_auth=cam.digest_auth,
-                             ssl=cam.ssl,
-                             verify_ssl=cam.verify_ssl,
-                             sec_lvl=cam.sec_lvl)
-                    #vivocam.do('do0',1)
+                    if cam.host is not None:
+                        vivocam = VivotekCamera(host=cam.host,
+                                 port=cam.port,
+                                 usr=cam.usr,
+                                 pwd=cam.pwd,
+                                 digest_auth=cam.digest_auth,
+                                 ssl=cam.ssl,
+                                 verify_ssl=cam.verify_ssl,
+                                 sec_lvl=cam.sec_lvl)
+                        vivocam.do('do0',1)
             else:
                 print('Erro de validación en cam',cam.nombre)
 
