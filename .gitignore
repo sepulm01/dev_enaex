@@ -13,3 +13,4 @@ color/
 __pycache__/
 *.log
 streaming/
+basic*.py
