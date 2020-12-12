@@ -244,7 +244,7 @@ def alarma_post(request):
                 evento = Eventos.objects.filter(proced=True)
                 #print("evento",evento)
                 if len(evento)==0:
-                    if cam.host is not None:
+                    if cam.host is not '':
                         vivocam = VivotekCamera(host=cam.host,
                                  port=cam.port,
                                  usr=cam.usr,
