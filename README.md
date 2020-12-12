@@ -273,3 +273,12 @@ cp main.py  /home/sepulm01/dev_enaex
 cd /home/sepulm01/
 sudo rm -r download
 ```
+
+#Logs
+
+Cambiar la configuración de los logs a diario y no crear nuevos
+
+```
+sudo nano /etc/logrotate.conf
+sudo logrotate -f /etc/logrotate.conf
+```

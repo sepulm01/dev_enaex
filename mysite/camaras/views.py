@@ -275,7 +275,7 @@ def camviva_post(request):
         if camara is not None:
             cam=Camara.objects.get(nombre=camara)
             if secreto == cam.secreto:
-                print('cam.secreto iguales en camviva_post')
+                #print('cam.secreto iguales en camviva_post')
                 cam.actualizado = tiempo
                 cam.image =  image
                 cam.estado = True

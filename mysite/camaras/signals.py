@@ -25,14 +25,14 @@ def alarma_gatillada(sender, instance, created, **kwargs):
         e.save()
         instance.evento = e
         instance.save()
-        print("Nuevo evento creado",e.pk)
+        #print("Nuevo evento creado",e.pk)
         mensaje = 'Nueva alarma gatillada ' + str(e.pk)
         mensajeria(niv0,mensaje,e)
         #wapp(num,'Nueva alarma gatillada\n'+str(instance.tiempo)+' '+str(instance.camara) ,e)
     else:
         if instance.evento is None:
             #and instance.tiempo >= eve[0].t_ini:
-            print(eve,eve[0],type(eve[0]),len(eve))
+            #print(eve,eve[0],type(eve[0]),len(eve))
             instance.evento=eve[0]
             instance.save()
             print('viejo evento con alarma agregada')
@@ -68,7 +68,7 @@ def escalamiento():
                 eve.estado = 3
                 eve.save()
         else:
-            print('pasa x eve.proced 1')
+            #print('pasa x eve.proced 1')
             if eve.t_ini + datetime.timedelta(minutes=60) < now():
                 eve.activo = False
                 eve.proced = False
@@ -91,7 +91,7 @@ def mensajeria(lista,mensaje,evento):
             mail_subject = mensaje
             message = mail_subject
             envia_mail(n.mail,mail_subject, message,evento)
-            print(n.mail)
+            #print(n.mail)
 
 def envia_mail(to_email,mail_subject,message,evento):
     email=EmailMultiAlternatives(mail_subject, message, to=[to_email])
@@ -111,14 +111,14 @@ def wapp(num, txt ,evento):
     client = Client(account_sid, auth_token)
     #para = 'whatsapp:' + num
     para = str(num)
-    print(para, 'numero')
+    #print(para, 'numero')
     try:
         message = client.messages.create(
                   from_='+18133286552',
                   body =txt,
                   to='+'+para
                                   )
-        print(message.sid)
+        #print(message.sid)
         reg=RegAcciones(evento=evento,accion="SMS enviado a:"+num+", texto: "+txt+", SID:"+message.sid)
         reg.save()
     except Exception as e:
