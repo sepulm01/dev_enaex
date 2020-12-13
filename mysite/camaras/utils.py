@@ -60,7 +60,7 @@ def check_cam():
             cam.save()
             #print ('Cambio en',cam.nombre, cam.estado, cam.error_msg)
         else:
-            if cam.host is not '0.0.0.0':
+            if cam.host != '0.0.0.0':
                 vivocam = VivotekCamera(host=cam.host,
                                  port=cam.port,
                                  usr=cam.usr,
